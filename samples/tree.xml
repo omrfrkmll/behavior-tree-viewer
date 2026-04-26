@@ -1,0 +1,41 @@
+
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="5" name="TopLevelRecovery">
+      <Sequence name="MissionWithCharging">
+        <Repeat num_cycles="{num_locations}">
+          <Sequence name="NavigateToNextLocation">
+            <RetryUntilSuccessful num_attempts="-1" name="WaitUntilReady">
+              <CheckModbus address="m500" expected_value="false"/>
+            </RetryUntilSuccessful>
+            <LoadAndIterateLocations locations_file="{locations_file}" target_pose="{current_target_pose}" num_locations="{num_locations}"/>
+            <SubTree ID="GoToPoseWithModbus" target_pose="{current_target_pose}" __shared_blackboard="true"/>
+          </Sequence>
+        </Repeat>
+        <RetryUntilSuccessful num_attempts="-1" name="WaitUntilReady">
+          <CheckModbus address="m500" expected_value="false"/>
+        </RetryUntilSuccessful>
+        <WriteModbus name="SetTaskComplete" address="2500" value="true"/>
+        <DockRobot dock_id="home_dock"/>
+      </Sequence>
+      <WaitAction wait_action_duration="2"/>
+    </RecoveryNode>
+  </BehaviorTree>
+  <BehaviorTree ID="GoToPoseWithModbus">
+    <Sequence>
+      <Fallback name="ActionWithCleanup">
+        <Sequence name="HappyPath">
+          <WaitAction name="WaitAfterPLCReady" wait_action_duration="2"/>
+          <RetryUntilSuccessful num_attempts="-1" name="GoToPoseAction">
+            <GoToPose target_pose="{current_target_pose}"/>
+          </RetryUntilSuccessful>
+          <WriteModbus name="SetTaskComplete" address="2500" value="true"/>
+          <WaitAction wait_action_duration="2"/>
+        </Sequence>
+        <Sequence name="FailureCleanupPath">
+          <WriteModbus name="SetStoppedOnFailure" address="2010" value="false"/>
+        </Sequence>
+      </Fallback>
+    </Sequence>
+  </BehaviorTree>
+</root>
