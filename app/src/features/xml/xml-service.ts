@@ -1,4 +1,4 @@
-import { XMLParser, XMLBuilder } from 'fast-xml-parser';
+import { XMLParser, XMLBuilder, XMLValidator } from 'fast-xml-parser';
 import { BehaviorTree, BtNode, NodeModel, NodeStatus } from '../../types';
 import { detectCategory } from '../../utils/category';
 
@@ -18,6 +18,28 @@ export class XmlService {
     suppressEmptyNode: true,
     preserveOrder: true
   });
+
+  public validateXml(xmlString: string): { valid: boolean; error?: string; line?: number; col?: number } {
+    const result = XMLValidator.validate(xmlString);
+    if (result === true) {
+      return { valid: true };
+    }
+    return {
+      valid: false,
+      error: (result as any).err?.msg || 'Invalid XML syntax',
+      line: (result as any).err?.line,
+      col: (result as any).err?.col
+    };
+  }
+
+  public formatXml(rawXml: string): string {
+    try {
+      const parsed = this.parser.parse(rawXml);
+      return this.builder.build(parsed);
+    } catch {
+      return rawXml;
+    }
+  }
 
   public parseXml(xmlContent: string, customModels: NodeModel[]): { trees: BehaviorTree[]; newModels: NodeModel[] } {
     try {
@@ -162,8 +184,8 @@ export class XmlService {
     });
   }
 
-  public serializeTreeToXml(tree: BehaviorTree): string {
-    if (!tree?.root) {
+  public serializeAllTreesToXml(trees: BehaviorTree[], mainTreeId?: string): string {
+    if (!trees || trees.length === 0) {
       return '<!-- No Tree Available -->';
     }
 
@@ -173,20 +195,24 @@ export class XmlService {
 
       const obj: any = { ':@': attrs };
       const childrenToWrite = (n.name === 'SubTree' && (attrs['ID'] || attrs['name'])) ? [] : n.children;
-      obj[n.name] = childrenToWrite.map(nodeToObj);
+      obj[n.name] = (childrenToWrite || []).map(nodeToObj);
       return obj;
     };
 
+    const validTrees = trees.filter(t => t.root);
+    if (validTrees.length === 0) {
+      return '<!-- No Tree Available -->';
+    }
 
-    const treeObj: any = {
-      ':@': { ID: tree.id },
-      BehaviorTree: [nodeToObj(tree.root)]
-    };
+    const treeObjs = validTrees.map(t => ({
+      ':@': { ID: t.id },
+      BehaviorTree: [nodeToObj(t.root!)]
+    }));
 
     const rootDoc = [
       {
-        ':@': { main_tree_to_execute: tree.id },
-        root: [treeObj]
+        ':@': { main_tree_to_execute: mainTreeId || validTrees[0].id },
+        root: treeObjs
       }
     ];
 
@@ -196,6 +222,13 @@ export class XmlService {
       console.error('XML formatting error', e);
       return '<!-- XML generation error -->';
     }
+  }
+
+  public serializeTreeToXml(tree: BehaviorTree): string {
+    if (!tree?.root) {
+      return '<!-- No Tree Available -->';
+    }
+    return this.serializeAllTreesToXml([tree], tree.id);
   }
 
   public downloadXmlFile(xmlContent: string, fileName: string) {

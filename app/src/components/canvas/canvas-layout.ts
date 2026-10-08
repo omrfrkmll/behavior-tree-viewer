@@ -232,7 +232,7 @@ export class CanvasLayoutService {
   public static getNodeOutputSockets(node: BtNode): Array<'out' | 'success' | 'failure'> {
     const renderer = NodeShapeRegistry.getRenderer(node);
     if (renderer.getOutputSockets) {
-      return renderer.getOutputSockets(node);
+      return renderer.getOutputSockets(node).filter((s): s is 'out' | 'success' | 'failure' => s !== 'in');
     }
     return ['out'];
   }
@@ -295,4 +295,34 @@ export class CanvasLayoutService {
       y: ny + rowY
     };
   }
+
+  public static layoutContainerDirectChildren(container: BtNode, customModels: NodeModel[]) {
+    if (!NodeShapeRegistry.isContainer(container) || !container.children) return;
+    const cx = container.x ?? 0;
+    const cy = container.y ?? 0;
+    const nodeW = this.getNodeWidth(container);
+    const spineW = CANVAS_CONSTANTS.SPINE_WIDTH;
+    const padLeft = 14;
+    const childW = CANVAS_CONSTANTS.NODE_WIDTH;
+    const childCenterX = cx - nodeW / 2 + spineW + padLeft + childW / 2;
+
+    const topH = CANVAS_CONSTANTS.SEQUENCE_HEADER_H;
+    const padTop = CANVAS_CONSTANTS.SEQUENCE_PAD_TOP;
+    delete (container as any)._cardHeight;
+    delete (container as any)._slotHeight;
+    const cardH = this.getNodeHeight(container, customModels);
+    let currentY = cy - cardH / 2 + topH + padTop;
+    const childGap = CANVAS_CONSTANTS.SEQUENCE_CHILD_GAP;
+
+    container.children.forEach(child => {
+      const isChildContainer = NodeShapeRegistry.isContainer(child);
+      const ch = isChildContainer
+        ? this.getNodeHeight(child, customModels)
+        : this.getBasicNodeHeight(child, customModels);
+      child.x = childCenterX;
+      child.y = currentY + ch / 2;
+      currentY += ch + childGap;
+    });
+  }
 }
+

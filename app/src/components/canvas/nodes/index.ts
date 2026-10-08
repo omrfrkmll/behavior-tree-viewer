@@ -21,7 +21,7 @@ export class NodeRenderer {
     callbacks: NodeRendererCallbacks
   ) {
     selection.each(function (d) {
-      const g = d3.select(this);
+      const g = d3.select<SVGGElement, BtNode>(this);
       g.selectAll('*').remove();
 
       const renderer = NodeShapeRegistry.getRenderer(d);

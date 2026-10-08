@@ -84,7 +84,10 @@ export class WireRenderer {
         const targetNode = allNodes.find(n => n.id === d.targetNodeId);
         if (!targetNode) return '';
         const targetPos = CanvasLayoutService.getParameterSocketCoords(targetNode, d.targetPortName, customModels);
-        return computeBezierWire(d.x + 67.5, d.y, targetPos.x, targetPos.y);
+        const isOutput = d.direction === 'output';
+        return isOutput
+          ? computeBezierWire(targetPos.x, targetPos.y, d.x - 67.5, d.y)
+          : computeBezierWire(d.x + 67.5, d.y, targetPos.x, targetPos.y);
       })
       .on('click', (event, d) => {
         event.stopPropagation();
@@ -110,7 +113,8 @@ export class WireRenderer {
 
     const enter = selection.enter().append('g')
       .attr('class', 'tag-node cursor-grab active:cursor-grabbing group')
-      .attr('data-id', d => d.id);
+      .attr('data-id', d => d.id)
+      .attr('transform', d => `translate(${d.x},${d.y})`);
 
     const tagDrag = d3.drag<SVGGElement, TagNode>()
       .on('start', function () {
@@ -124,8 +128,12 @@ export class WireRenderer {
         const targetNode = allNodes.find(n => n.id === d.targetNodeId);
         if (targetNode) {
           const targetPos = CanvasLayoutService.getParameterSocketCoords(targetNode, d.targetPortName, customModels);
+          const isOutput = d.direction === 'output';
+          const pathD = isOutput
+            ? computeBezierWire(targetPos.x, targetPos.y, d.x - 67.5, d.y)
+            : computeBezierWire(d.x + 67.5, d.y, targetPos.x, targetPos.y);
           dataWiresLayer.select(`#data-wire-${d.id}`)
-            .attr('d', computeBezierWire(d.x + 67.5, d.y, targetPos.x, targetPos.y));
+            .attr('d', pathD);
         }
       });
 
@@ -135,6 +143,7 @@ export class WireRenderer {
       const g = d3.select(this);
       const cardW = 135;
       const cardH = 48;
+      const isOutput = d.direction === 'output';
 
       // 1. Unified Card Container
       g.append('rect')
@@ -146,24 +155,24 @@ export class WireRenderer {
         .attr('rx', 8)
         .attr('ry', 8);
 
-      // Blackboard data accent strip
+      // Blackboard data accent strip (purple for input, emerald for output)
       g.append('rect')
         .attr('class', 'transition-colors duration-150')
-        .attr('x', -cardW / 2 + 2.5)
+        .attr('x', isOutput ? -cardW / 2 + 2.5 : cardW / 2 - 5.5)
         .attr('y', -cardH / 2 + 6)
         .attr('width', 3)
         .attr('height', cardH - 12)
         .attr('rx', 1.5)
-        .attr('fill', '#8b5cf6');
+        .attr('fill', isOutput ? '#10b981' : '#8b5cf6');
 
       // 2. Header Row
       g.append('text')
         .attr('class', 'fill-foreground font-sans font-semibold text-[11px] select-none pointer-events-none')
-        .attr('x', -cardW / 2 + 10)
+        .attr('x', isOutput ? -cardW / 2 + 12 : -cardW / 2 + 10)
         .attr('y', -cardH / 2 + 16)
         .text(d.name.length > 12 ? d.name.substring(0, 10) + '..' : d.name);
 
-      const typeStr = d.dataType ? (d.dataType.split('::').pop() || d.dataType) : 'string';
+      const typeStr = d.dataType ? (d.dataType.split('::').pop() || d.dataType) : (isOutput ? 'output' : 'string');
       const badgeW = 48;
       const badgeH = 15;
       const badgeX = cardW / 2 - badgeW - 8;
@@ -174,13 +183,13 @@ export class WireRenderer {
         .attr('transform', `translate(${badgeX}, ${badgeY})`);
 
       badgeG.append('rect')
-        .attr('class', 'fill-secondary stroke-border stroke-[0.5px] rx-1')
+        .attr('class', isOutput ? 'fill-emerald-500/10 stroke-emerald-500/30 stroke-[0.5px] rx-1' : 'fill-secondary stroke-border stroke-[0.5px] rx-1')
         .attr('width', badgeW)
         .attr('height', badgeH)
         .attr('rx', 4);
 
       badgeG.append('text')
-        .attr('class', 'fill-foreground font-mono text-[8px] font-semibold select-none pointer-events-none')
+        .attr('class', `font-mono text-[8px] font-semibold select-none pointer-events-none ${isOutput ? 'fill-emerald-600 dark:fill-emerald-400' : 'fill-foreground'}`)
         .attr('x', badgeW / 2)
         .attr('y', 11)
         .attr('text-anchor', 'middle')
@@ -218,21 +227,26 @@ export class WireRenderer {
           }
         });
 
-      // Output pin on right edge
+      // Pin location based on direction:
+      // - INPUT tag: pin on RIGHT edge (feeds value into node on the right)
+      // - OUTPUT tag: pin on LEFT edge (receives value from node on the left)
+      const pinX = isOutput ? -cardW / 2 : cardW / 2;
+      const pinColor = isOutput ? '#16a34a' : '#0284c7';
+
       const tagPin = g.append('g')
         .attr('class', 'cursor-crosshair group/pin')
-        .attr('transform', `translate(${cardW / 2}, 0)`);
+        .attr('transform', `translate(${pinX}, 0)`);
 
       tagPin.append('circle').attr('r', 10).attr('fill', 'transparent');
       tagPin.append('circle')
         .attr('class', 'fill-[var(--node-bg)] transition-transform duration-150 group-hover/pin:scale-125')
         .attr('r', 4.5)
-        .attr('stroke', '#0284c7')
+        .attr('stroke', pinColor)
         .attr('stroke-width', 1.5);
       tagPin.append('circle')
         .attr('class', 'pointer-events-none')
         .attr('r', 1.8)
-        .attr('fill', '#0284c7');
+        .attr('fill', pinColor);
     });
 
     enter.on('click', (event, d) => {
@@ -273,8 +287,12 @@ export class WireRenderer {
       const targetNode = allNodes.find(n => n.id === tag.targetNodeId);
       if (targetNode) {
         const targetPos = CanvasLayoutService.getParameterSocketCoords(targetNode, tag.targetPortName, customModels);
+        const isOutput = tag.direction === 'output';
+        const pathD = isOutput
+          ? computeBezierWire(targetPos.x, targetPos.y, tag.x - 67.5, tag.y)
+          : computeBezierWire(tag.x + 67.5, tag.y, targetPos.x, targetPos.y);
         dataWiresLayer.select(`#data-wire-${tag.id}`)
-          .attr('d', computeBezierWire(tag.x + 67.5, tag.y, targetPos.x, targetPos.y));
+          .attr('d', pathD);
       }
     });
   }

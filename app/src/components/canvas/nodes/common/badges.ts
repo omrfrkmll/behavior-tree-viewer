@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { BtNode } from '../../../../types';
+import { BtNode, NodeCategory } from '../../../../types';
 import { getCategoryColor, getCategorySymbol } from '../../../../utils/category';
 
 export class BadgesHelper {
@@ -8,7 +8,7 @@ export class BadgesHelper {
     x: number,
     y: number,
     height: number,
-    category: string
+    category: NodeCategory
   ) {
     return g.append('rect')
       .attr('class', 'category-accent-stripe transition-colors duration-150')
@@ -25,7 +25,7 @@ export class BadgesHelper {
     x: number,
     y: number,
     name: string,
-    category: string
+    category: NodeCategory
   ) {
     return g.append('text')
       .attr('class', 'fill-foreground font-mono font-bold text-[11px] select-none pointer-events-none')
@@ -63,7 +63,7 @@ export class BadgesHelper {
     g: d3.Selection<SVGGElement, BtNode, any, unknown>,
     x: number,
     y: number,
-    category: string,
+    category: NodeCategory,
     width: number = 54,
     height: number = 15
   ) {

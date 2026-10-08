@@ -30,3 +30,5 @@ pnpm-debug.log*
 # OS specific
 .DS_Store
 Thumbs.db
+
+known_issues*

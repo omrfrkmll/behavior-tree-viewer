@@ -62,9 +62,9 @@ export const StudioApp: React.FC = () => {
   const activeTree = trees[activeTreeIndex] || null;
 
   const xmlCode = useMemo(() => {
-    if (!activeTree) return '<!-- No Tree Available -->';
-    return xmlService.serializeTreeToXml(activeTree);
-  }, [activeTree, xmlVersion]);
+    if (!trees || trees.length === 0) return '<!-- No Tree Available -->';
+    return xmlService.serializeAllTreesToXml(trees, activeTree?.id);
+  }, [trees, activeTree, xmlVersion]);
 
   // Handle tree load
   const loadXml = useCallback((xmlContent: string) => {
@@ -103,29 +103,36 @@ export const StudioApp: React.FC = () => {
     setXmlVersion(v => v + 1);
   }, []);
 
-  const handleDeleteNode = useCallback((node: BtNode) => {
+  const handleDeleteNodes = useCallback((nodesToDelete: BtNode[]) => {
     const currentTree = treesRef.current[activeTreeIndexRef.current];
-    if (!currentTree) return;
+    if (!currentTree || nodesToDelete.length === 0) return;
 
-    if (node.parent) {
-      const idx = node.parent.children.indexOf(node);
-      if (idx !== -1) {
-        node.parent.children.splice(idx, 1);
+    nodesToDelete.forEach(node => {
+      if (node.parent) {
+        const idx = node.parent.children.indexOf(node);
+        if (idx !== -1) {
+          node.parent.children.splice(idx, 1);
+        }
+      } else if (currentTree.floatingNodes) {
+        const idx = currentTree.floatingNodes.indexOf(node);
+        if (idx !== -1) {
+          currentTree.floatingNodes.splice(idx, 1);
+        }
       }
-    } else if (currentTree.floatingNodes) {
-      const idx = currentTree.floatingNodes.indexOf(node);
-      if (idx !== -1) {
-        currentTree.floatingNodes.splice(idx, 1);
+      if (currentTree.root === node) {
+        currentTree.root = undefined;
       }
-    } else if (currentTree.root === node) {
-      currentTree.root = undefined;
-    }
+    });
 
     setSelectedNode(null);
     canvasRef.current?.setSelectedNode(null);
     canvasRef.current?.renderGraph(false);
     setXmlVersion(v => v + 1);
   }, []);
+
+  const handleDeleteNode = useCallback((node: BtNode) => {
+    handleDeleteNodes([node]);
+  }, [handleDeleteNodes]);
 
   const handleDuplicateNode = useCallback((node: BtNode) => {
     const currentTree = treesRef.current[activeTreeIndexRef.current];
@@ -169,6 +176,7 @@ export const StudioApp: React.FC = () => {
   const handleAddNodeAtCoords = useCallback((modelName: string, category: string, clientX: number, clientY: number) => {
     const currentTree = treesRef.current[activeTreeIndexRef.current];
     if (!currentTree) return;
+    const coords = canvasRef.current?.screenToCanvasCoords(clientX, clientY) || { x: clientX, y: clientY };
     const model = customModelsRef.current.find(m => m.name === modelName);
     const newNode: BtNode = {
       id: crypto.randomUUID(),
@@ -177,8 +185,8 @@ export const StudioApp: React.FC = () => {
       attributes: {},
       children: [],
       status: NodeStatus.IDLE,
-      x: clientX - 300,
-      y: clientY - 100
+      x: coords.x,
+      y: coords.y
     };
     if (model) {
       model.ports.forEach(p => {
@@ -225,6 +233,38 @@ export const StudioApp: React.FC = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   }, [xmlCode]);
+
+  const handleApplyXmlFromEditor = useCallback((newXml: string) => {
+    const prevActiveId = treesRef.current[activeTreeIndexRef.current]?.id;
+    const { trees: parsedTrees, newModels } = xmlService.parseXml(newXml, customModelsRef.current);
+    if (newModels.length > 0) {
+      setCustomModels(prev => [...prev, ...newModels]);
+    }
+
+    if (parsedTrees.length > 0) {
+      setTrees(parsedTrees);
+      let newIdx = 0;
+      if (prevActiveId) {
+        const found = parsedTrees.findIndex(t => t.id === prevActiveId);
+        if (found !== -1) newIdx = found;
+      }
+      setActiveTreeIndex(newIdx);
+      setSelectedNode(null);
+
+      setTimeout(() => {
+        if (canvasRef.current) {
+          canvasRef.current.setData(parsedTrees[newIdx], [...customModelsRef.current, ...newModels]);
+          canvasRef.current.setSelectedNode(null);
+          canvasRef.current.renderGraph(true);
+        }
+      }, 0);
+      setXmlVersion(v => v + 1);
+
+      if (vscodeRef.current) {
+        vscodeRef.current.postMessage({ type: 'edit', text: newXml });
+      }
+    }
+  }, []);
 
   const handleAddTag = useCallback((name: string, value: string) => {
     const isBb = value.startsWith('{') && value.endsWith('}');
@@ -286,7 +326,14 @@ export const StudioApp: React.FC = () => {
     });
 
     contextMenuRef.current = new ContextMenuComponent({
-      onDeleteNode: (node) => handleDeleteNode(node),
+      onDeleteNode: (node) => {
+        const selected = canvasRef.current?.getSelectedNodes() || [];
+        if (selected.includes(node) && selected.length > 1) {
+          handleDeleteNodes(selected);
+        } else {
+          handleDeleteNode(node);
+        }
+      },
       onDuplicateNode: (node) => handleDuplicateNode(node),
       onInspectNode: (node) => {
         setSelectedNode(node);
@@ -319,13 +366,17 @@ export const StudioApp: React.FC = () => {
     // Keyboard shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if ((document.activeElement as HTMLElement)?.tagName === 'INPUT') return;
+        const tag = (document.activeElement as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
         if (canvasRef.current?.getSelectedTag()) {
           canvasRef.current.deleteSelectedTag();
           return;
         }
-        if (selectedNodeRef.current) {
-          handleDeleteNode(selectedNodeRef.current);
+        const selectedNodes = canvasRef.current?.getSelectedNodes() || [];
+        if (selectedNodes.length > 0) {
+          handleDeleteNodes(selectedNodes);
+        } else if (selectedNodeRef.current) {
+          handleDeleteNodes([selectedNodeRef.current]);
         }
       }
     };
@@ -430,6 +481,7 @@ export const StudioApp: React.FC = () => {
           onClose={() => setCodeViewOpen(false)}
           onCopy={handleCopyXml}
           copied={copied}
+          onApplyCode={handleApplyXmlFromEditor}
         />
       }
       zoomControls={

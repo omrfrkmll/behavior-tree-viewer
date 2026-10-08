@@ -25,7 +25,11 @@ export class StandardCardShape implements NodeShapeRenderer {
     return CANVAS_CONSTANTS.HEADER_HEIGHT + 14 + (portCount * CANVAS_CONSTANTS.ROW_HEIGHT) + customNameExtra;
   }
 
-  public getOutputSockets(_node: BtNode): SocketType[] {
+  public getOutputSockets(node: BtNode): SocketType[] {
+    // Action and Condition nodes are leaf execution nodes in Behavior Trees - they do NOT accept children
+    if (node.category === 'Action' || node.category === 'Condition') {
+      return [];
+    }
     return ['out'];
   }
 

@@ -37,7 +37,7 @@ export interface BtNode {
   attributes: Record<string, string>;
   children: BtNode[];
   parent?: BtNode;
-  parentPort?: 'success' | 'failure';
+  parentPort?: 'success' | 'failure' | 'out';
   collapsed?: boolean;
   status: NodeStatus;
   x?: number;
@@ -51,6 +51,7 @@ export interface TagNode {
   dataType: string;
   targetNodeId: string;
   targetPortName: string;
+  direction?: 'input' | 'output';
   x: number;
   y: number;
 }

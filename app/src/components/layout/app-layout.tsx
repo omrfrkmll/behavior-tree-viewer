@@ -210,25 +210,25 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             id="canvas-overlay-hud"
             className="absolute bottom-3 left-3 flex items-center gap-1.5 pointer-events-none z-10 select-none"
           >
-            <Badge variant="outline" className="gap-1.5 px-2.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
+            <Badge variant="outline" className="gap-1.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
               <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
                 Left Drag
               </kbd>
               Move / Marquee
             </Badge>
-            <Badge variant="outline" className="gap-1.5 px-2.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
+            <Badge variant="outline" className="gap-1.5  py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
               <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
                 Middle Click
               </kbd>
               Pan
             </Badge>
-            <Badge variant="outline" className="gap-1.5 px-2.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
+            <Badge variant="outline" className="gap-1.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
               <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
                 Right Click
               </kbd>
               Menu
             </Badge>
-            <Badge variant="outline" className="gap-1.5 px-2.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
+            <Badge variant="outline" className="gap-1.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
               <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
                 Del
               </kbd>

@@ -269,6 +269,9 @@ export class CanvasViewerComponent {
           const port = this.connectingParamPort;
           if (!this.currentTree.tagNodes) this.currentTree.tagNodes = [];
           const defaultVal = port.node.attributes[port.portName] || `{${port.portName}}`;
+          const model = this.customModels.find(m => m.name === port.node.name);
+          const portDef = model?.ports?.find(p => p.name === port.portName);
+          const isOutput = portDef?.direction === 'output';
           const newTag: TagNode = {
             id: crypto.randomUUID(),
             name: port.portName,
@@ -276,6 +279,7 @@ export class CanvasViewerComponent {
             dataType: port.portType,
             targetNodeId: port.node.id,
             targetPortName: port.portName,
+            direction: isOutput ? 'output' : 'input',
             x: mx,
             y: my
           };
@@ -396,6 +400,22 @@ export class CanvasViewerComponent {
 
   public getSelectedNodes(): BtNode[] {
     return Array.from(this.selectedNodes);
+  }
+
+  public screenToCanvasCoords(clientX: number, clientY: number): { x: number; y: number } {
+    const zoomNode = this.zoomGroup?.node();
+    const svgNode = this.svg?.node();
+    if (!zoomNode || !svgNode) return { x: clientX, y: clientY };
+
+    const pt = svgNode.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const ctm = zoomNode.getScreenCTM();
+    if (ctm) {
+      const transformed = pt.matrixTransform(ctm.inverse());
+      return { x: Math.round(transformed.x), y: Math.round(transformed.y) };
+    }
+    return { x: clientX, y: clientY };
   }
 
   public setSelectedTag(tag: TagNode | null) {
@@ -520,8 +540,11 @@ export class CanvasViewerComponent {
     }
   }
 
-  public attachNode(parent: BtNode, child: BtNode, portType: 'success' | 'failure' = 'success') {
+  public attachNode(parent: BtNode, child: BtNode, portType: 'out' | 'success' | 'failure' = 'out') {
     if (parent === child || !this.currentTree) return;
+
+    // Leaf execution nodes (Action, Condition) cannot accept children in Behavior Trees
+    if (parent.category === 'Action' || parent.category === 'Condition') return;
 
     let cur: BtNode | undefined = parent;
     while (cur) {
@@ -582,6 +605,10 @@ export class CanvasViewerComponent {
   private startConnectingParam(node: BtNode, portName: string, portType: string) {
     this.cleanupParamWire();
     const startPos = CanvasLayoutService.getParameterSocketCoords(node, portName, this.customModels);
+    const model = this.customModels.find(m => m.name === node.name);
+    const portDef = model?.ports?.find(p => p.name === portName);
+    const isOutput = portDef?.direction === 'output';
+
     this.connectingParamPort = {
       node,
       portName,
@@ -591,7 +618,7 @@ export class CanvasViewerComponent {
     this.tempParamWirePath = this.tempLayer.append('path')
       .attr('class', 'wire-temp-data')
       .attr('fill', 'none')
-      .attr('stroke', '#38bdf8')
+      .attr('stroke', isOutput ? '#10b981' : '#38bdf8')
       .attr('stroke-width', '2')
       .attr('stroke-dasharray', '6 4')
       .attr('stroke-linecap', 'round')
@@ -626,7 +653,8 @@ export class CanvasViewerComponent {
     if (!this.currentTree.floatingNodes.includes(child)) {
       this.currentTree.floatingNodes.push(child);
     }
-    this.renderGraph(true);
+    CanvasLayoutService.layoutContainerDirectChildren(seq, this.customModels);
+    this.renderGraph(false);
     this.callbacks.onTreeModified();
   }
 
@@ -751,6 +779,7 @@ export class CanvasViewerComponent {
 
     const drag = d3.drag<SVGGElement, BtNode>()
       .filter((event) => {
+        if (event.button !== 0 || this.isSpacePressed) return false;
         const target = event.target as HTMLElement;
         if (target.closest('.node-param-select-container, .node-param-select-box, .node-header-btn, .sequence-add-node-btn, .socket-pin')) {
           return false;
@@ -916,8 +945,23 @@ export class CanvasViewerComponent {
         self.nodesLayer.select(`.blender-node[data-id="${d.id}"]`).style('opacity', '1');
 
         if (!(d as any)._hasDragMoved) {
-          self.setSelectedNode(d);
-          self.callbacks.onNodeSelected(d);
+          const isShift = (_event.sourceEvent && _event.sourceEvent.shiftKey) || (_event as any).shiftKey;
+          if (isShift) {
+            if (self.selectedNodes.has(d)) {
+              self.selectedNodes.delete(d);
+              const remaining = Array.from(self.selectedNodes);
+              self.selectedNode = remaining.length > 0 ? remaining[0] : null;
+            } else {
+              self.selectedNodes.add(d);
+              self.selectedNode = d;
+            }
+            self.nodesLayer.selectAll('.blender-node')
+              .classed('selected', (n: any) => self.selectedNodes.has(n));
+            self.callbacks.onNodeSelected(self.selectedNode);
+          } else {
+            self.setSelectedNode(d);
+            self.callbacks.onNodeSelected(d);
+          }
           return;
         }
 
@@ -940,7 +984,8 @@ export class CanvasViewerComponent {
             if (!self.currentTree.floatingNodes.includes(d)) {
               self.currentTree.floatingNodes.push(d);
             }
-            self.renderGraph(true);
+            CanvasLayoutService.layoutContainerDirectChildren(container, self.customModels);
+            self.renderGraph(false);
             self.callbacks.onTreeModified();
             return;
           } else {
@@ -954,7 +999,8 @@ export class CanvasViewerComponent {
             container.children.splice(insertIdx, 0, d);
             delete (container as any)._cardHeight;
             delete (container as any)._slotHeight;
-            self.renderGraph(true);
+            CanvasLayoutService.layoutContainerDirectChildren(container, self.customModels);
+            self.renderGraph(false);
             self.callbacks.onTreeModified();
             return;
           }
@@ -1005,7 +1051,8 @@ export class CanvasViewerComponent {
             delete (container as any)._cardHeight;
             delete (container as any)._slotHeight;
 
-            self.renderGraph(true);
+            CanvasLayoutService.layoutContainerDirectChildren(container, self.customModels);
+            self.renderGraph(false);
             self.callbacks.onTreeModified();
             break;
           }
@@ -1030,9 +1077,8 @@ export class CanvasViewerComponent {
         this.detachSequenceChild(seq, child, idx);
       },
       onNodeAddedToSequence: (seq, newNode) => {
-        delete (seq as any)._cardHeight;
-        delete (seq as any)._slotHeight;
-        this.renderGraph(true);
+        CanvasLayoutService.layoutContainerDirectChildren(seq, this.customModels);
+        this.renderGraph(false);
         this.callbacks.onTreeModified();
         this.setSelectedNode(newNode);
       }
