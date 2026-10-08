@@ -1,0 +1,12 @@
+[package]
+name = "bt-cli"
+version = "0.1.0"
+edition = "2021"
+description = "Behavior Tree CLI tool for scanning, validation, and serving visualizer"
+
+[dependencies]
+bt-core = { path = "../bt-core" }
+clap = { version = "4.5", features = ["derive"] }
+serde_json = "1.0"
+tiny_http = "0.12"
+colored = "3.0"

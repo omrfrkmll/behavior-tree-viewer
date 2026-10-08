@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "crates/bt-core",
+    "crates/bt-cli",
+]
+resolver = "2"
