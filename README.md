@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Modern, interactive Behavior Tree visualizer, editor, and studio for ROS 2 (Nav2) and BehaviorTree.CPP v3/v4.**
+**Behavior tree visualizer and editor for ROS 2 (Nav2) and BehaviorTree.CPP (v3 / v4) XML formats.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![ROS 2](https://img.shields.io/badge/ROS_2-Humble%20%7C%20Iron%20%7C%20Jazzy-orange.svg)](https://docs.ros.org/)
@@ -12,129 +12,102 @@
 
 <br/><br/>
 
-<img src="Media/preview.png" alt="Behavior Tree Studio Preview" width="100%" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
+<img src="Media/themes-split.png" alt="Behavior Tree Studio Preview" width="100%" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
 
 </div>
 
 ---
 
-## 🚀 Overview
+## Overview
 
-**Behavior Tree Studio** is an industrial-grade, visual development environment designed for robotics engineers working with **ROS 2 Navigation2 (Nav2)** and **BehaviorTree.CPP (Groot2)**.
+Behavior Tree Studio is an interactive visual editor and viewer for robotics behavior trees built on **BehaviorTree.CPP** and **ROS 2 Navigation2 (Nav2)**. 
 
-Instead of rigid, vertical tree hierarchies or cluttered charts, Behavior Tree Studio delivers a sleek, fluid node graph inspired by modern digital content creation tools (Blender, Unreal Engine, NVIDIA Isaac-Sim). It visualizes execution flow from left to right, clearly communicates branch priorities, provides type-safe blackboard parameter connections, and features an integrated bidirectional XML code editor.
-
----
-
-## ✨ Key Features
-
-### 🎨 Fluid, Modular Node Canvas
-- **Horizontal Time & Priority Flow:** Logical left-to-right execution structure where branch order and fallback paths are immediately clear.
-- **Dual Output Execution Sockets:** Control nodes like `RecoveryNode` and `IfThenElse` render distinct **Success** and **Failure** sockets, avoiding ambiguous wiring.
-- **Smart Leaf Node Rules:** Leaf nodes (`Action`, `Condition`) strictly prohibit child execution sockets, matching Behavior Tree semantics.
-- **Non-Destructive Detachment:** Disconnecting a wire preserves disconnected subtrees as floating canvas nodes rather than deleting them.
-- **Multi-Select & Bulk Operations:** Marquee drag selection, multi-node repositioning, and batch deletion (`Delete`/`Backspace`).
-
-### 🏷️ Type-Safe Blackboard Tags & Data Wires
-- **Interactive Drag-to-Spawn:** Drag directly from input or output parameter pins into open canvas space to create blackboard parameter tag cards.
-- **Direction-Aware Wiring:**
-  - **Input parameters** (sky blue): Tag feeds value into the node's left pin.
-  - **Output parameters** (emerald green): Node feeds resulting value into the tag's left pin.
-- **Strong Typing:** Supports ROS 2 types (`geometry_msgs::msg::PoseStamped`, `double`, `string`, `bool`, etc.).
-- **In-Place Modification:** Click any tag value box to edit blackboard keys (`{target_pose}`) or static values directly.
-
-### 📝 Integrated XML Code Studio & Editor
-- **Resizable XML Drawer:** Slide open an interactive code drawer that can be resized freely.
-- **Bidirectional Live Synchronization:** Changes on canvas instantly update the XML; edits made in the code drawer compile directly onto the canvas (`Ctrl+S` / `Cmd+S` or "Apply Changes").
-- **Real-Time XML Validator:** Powered by `fast-xml-parser` with actionable error notifications and exact line numbers.
-- **Canvas-to-Code Highlighting:** Selecting any node on the canvas instantly highlights its corresponding XML block in the code view.
-- **SubTree Scoping:** Accurately highlights nodes within their enclosing `<BehaviorTree ID="...">` block, eliminating ambiguous regex matching.
-
-### 🌓 Premium Shadcn Theming & Canvas Controls
-- **Color Palettes:** Curated themes including **Neutral**, **Claude**, **Zinc**, **Slate**, and **Rose** with Dark/Light modes.
-- **Floating HUD & Controls:** Real-time zoom indicator with quick-select menu (`50%`, `75%`, `100%`, `125%`, `Fit`), blueprint grid switcher (Dots, 36px Grid, Empty), and keybinding helper pills.
-- **Middle-Click Pan & Smooth Zoom:** Natural viewport navigation with trackpad pinch or mouse wheel zoom and middle-click drag pan.
+The application presents execution hierarchies on a horizontal canvas (left-to-right), exposing execution order, fallback paths, and blackboard port wiring directly. It operates in three environments:
+1. **VS Code Extension:** Native preview and editing directly inside the editor (`Ctrl+Shift+V` / `Cmd+Shift+V` on `.xml` files).
+2. **Web Application:** Standalone browser-based studio deployed with Vite.
+3. **Desktop Application:** Native cross-platform desktop application powered by Tauri.
 
 ---
 
-## 🏗️ Architecture
+## Features
 
-The project is structured as a modular monorepo:
+### Node Canvas & Execution Flow
+- **Horizontal Hierarchy:** Left-to-right execution flow matching tree traversal order and branch priority.
+- **Explicit Execution Sockets:** Control nodes like `RecoveryNode` and `IfThenElse` render distinct Success and Failure sockets to prevent ambiguous connections.
+- **Node Semantics:** Leaf nodes (`Action`, `Condition`) enforce tree rules by disallowing child execution connections.
+- **Subtree Preservation:** Disconnecting a wire retains the disconnected branch as a floating node group instead of deleting it.
+- **Canvas Operations:** Marquee drag selection, multi-node movement, keyboard shortcuts (`Delete`, `Backspace`), middle-click pan, and pinch zoom.
+
+### Blackboard Ports & Data Flow
+- **Port Tag Cards:** Interactive drag-to-spawn blackboard cards from node input and output pins.
+- **Directional Wiring:** Visual differentiation between input ports (reading from blackboard) and output ports (writing to blackboard).
+- **ROS 2 Typing:** Compatible with common robotics data types (`geometry_msgs::msg::PoseStamped`, numeric, string, boolean).
+- **Inline Editing:** Direct editing of blackboard keys (e.g. `{target_pose}`) or static fallback values from the canvas.
+
+### Bidirectional XML Synchronization
+- **Integrated Code Drawer:** Slide-out XML editor with syntax validation.
+- **Two-Way Sync:** Canvas adjustments immediately update the XML tree; code edits compile and refresh the canvas layout upon saving (`Ctrl+S` / `Cmd+S`).
+- **AST Validation:** Structural validation identifying schema errors with exact line and column feedback.
+- **Cross-Highlighting:** Selecting a node on the canvas navigates to and highlights the corresponding XML element, scoped correctly inside `<BehaviorTree ID="...">` blocks.
+
+### Theming & Display Options
+- **Curated Themes:** Multiple light and dark color schemes, including Claude, Dracula, and Minimal neutral modes.
+- **Canvas HUD:** Quick-zoom presets (50%, 75%, 100%, 125%, Fit), grid background toggles (dots, lines, empty), and hotkey reference.
+
+---
+
+## Project Structure
+
+This repository is organized as a monorepo:
 
 ```text
 behavior-tree-viewer/
-├── app/                  # Web Visualizer (React 19 + Vite + D3.js + Tailwind CSS v4 + Radix UI)
-│   ├── src/components/canvas/   # D3 rendering, modular node shapes, wire calculation
-│   ├── src/components/code-drawer/ # Interactive XML Code Editor
-│   └── src/features/xml/        # XML parser, validator, AST generator, formatter
-├── crates/               # High-Performance Rust Workspace
-│   ├── bt-core/          # BehaviorTree parser, AST, schema validator in Rust
-│   └── bt-cli/           # "btview" CLI tool for workspace scanning, linting, local HTTP server
-├── src/                  # VS Code Extension Host (TypeScript + Webpack)
-│   └── extension.ts      # Webview panel manager & editor document sync
-├── vercel.json           # Vercel zero-config single-page application deployment
-├── package.json          # Root scripts & dependencies (Strictly pnpm)
+├── app/                  # Web and desktop visualizer UI (React 19, Vite, D3, Tailwind CSS v4)
+│   ├── src/components/   # Canvas layout, nodes, wire routing, navbar, inspector
+│   └── src/features/     # XML parsing, AST models, validation, Tauri bridges
+├── src/                  # VS Code extension host (TypeScript, Webpack)
+│   └── extension.ts      # Webview panel coordinator and editor document synchronization
+├── src-tauri/            # Tauri desktop configuration and Rust window runner
+├── crates/               # Rust workspace
+│   ├── bt-core/          # BehaviorTree parser, AST definitions, and schema validation
+│   └── bt-cli/           # "btview" CLI tool for workspace scanning and validation
+├── Media/                # Project assets and preview graphics
+├── vercel.json           # Web deployment configuration
+├── package.json          # Root workspace scripts and dependencies (pnpm)
 └── Cargo.toml            # Rust workspace definition
 ```
 
 ---
 
-## 🗺️ Roadmap
-
-```mermaid
-flowchart LR
-    A["Phase 1: Core Node Canvas & Web Studio (Completed ✅)"] --> B["Phase 2: Rust CLI & Workspace Scanner (In Progress 🚀)"]
-    B --> C["Phase 3: VS Code Custom Editor API (Planned 📅)"]
-    C --> D["Phase 4: Live Telemetry & Tauri Desktop (Planned 📅)"]
-```
-
-- [x] **Phase 1: Core Canvas & Web Studio**
-  - Modular node renderers (`StandardCard`, `SequenceCard`, `DecoratorCard`)
-  - Blackboard tag nodes with direction-aware data wires
-  - Resizable interactive XML Code Editor with live validation and line gutters
-  - Multi-theme engine, zoom controls, and marquee selection
-  - Vercel cloud deployment support
-- [ ] **Phase 2: Rust CLI (`btview`) & Workspace Scanner**
-  - `btview scan <dir>` to discover all ROS 2 Nav2 BT XMLs and `TreeNodesModel` definitions
-  - CLI tree linter for cyclic dependencies and undefined blackboard keys
-  - Local hot-reloading HTTP file server
-- [ ] **Phase 3: VS Code Custom Editor API**
-  - Seamless native `.xml` custom visual editor in VS Code
-  - Automatic workspace discovery of custom node libraries
-- [ ] **Phase 4: Live Telemetry & Standalone Desktop**
-  - ROS 2 ZeroMQ / WebSocket bridge for live node state telemetry (`IDLE`, `RUNNING`, `SUCCESS`, `FAILURE`)
-  - Standalone desktop bundles via Tauri (Linux, macOS, Windows)
-
----
-
-## 💻 Getting Started
+## Development & Usage
 
 ### Prerequisites
 - **Node.js** >= 18
-- **pnpm** >= 9 (Do not use `npm` or `yarn`)
-- **Rust & Cargo** (optional, required only for building `crates/`)
+- **pnpm** >= 9 (always use `pnpm`, avoid `npm` or `yarn`)
+- **Rust & Cargo** (required for desktop Tauri app and `crates/`)
 
-### 1. Web Studio (Local Development)
+### 1. Web Studio (Vite)
 
 ```bash
-# Clone the repository
-git clone https://github.com/omrfrkmll/behavior-tree-viewer.git
-cd behavior-tree-viewer
-
 # Install dependencies
 pnpm install
 
-# Start Vite development server
+# Start development server
 pnpm app:dev
-```
-Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-### 2. Production Build
-
-```bash
+# Build production bundle (outputs to dist-app/)
 pnpm app:build
 ```
-Build output will be generated in `dist-app/`.
+
+### 2. Desktop Application (Tauri)
+
+```bash
+# Run desktop development application
+pnpm desktop:dev
+
+# Build standalone desktop installer
+pnpm desktop:build
+```
 
 ### 3. VS Code Extension
 
@@ -142,32 +115,46 @@ Build output will be generated in `dist-app/`.
 # Compile extension host bundle
 pnpm run compile
 
-# Launch VS Code with extension in debug mode
-# Press F5 inside VS Code
+# Watch mode for extension changes
+pnpm run watch
 ```
+To test inside VS Code, press `F5` to open the Extension Development Host. Open any Behavior Tree XML file and press `Ctrl+Shift+V` (`Cmd+Shift+V` on macOS) to launch the preview.
 
-### 4. Rust CLI (`btview`)
+### 4. Rust Workspace
 
 ```bash
-# Build workspace
+# Build crates
 pnpm run rust:build
 
-# Run tests
+# Run test suite
 pnpm run rust:test
 ```
 
 ---
 
-## ☁️ Deployment (Vercel)
+## Supported Specifications
 
-Behavior Tree Studio is ready for instant deployment on Vercel:
-
-1. Import this repository in [Vercel](https://vercel.com).
-2. The included [`vercel.json`](vercel.json) will configure the build command (`pnpm app:build`) and output directory (`dist-app`) automatically.
-3. Deploy!
+- **BehaviorTree.CPP v3 and v4** XML schemas.
+- Standard control types: `Sequence`, `ReactiveSequence`, `PipelineSequence`, `Fallback`, `ReactiveFallback`, `IfThenElse`, `WhileDoElse`, `Switch2`, `Switch3`, `RoundRobin`, `RecoveryNode`.
+- Standard decorator types: `Inverter`, `ForceSuccess`, `ForceFailure`, `Repeat`, `RetryUntilSuccessful`, `KeepRunningUntilFailure`, `Delay`, `Timeout`, `RateController`, `DistanceController`.
+- Action & Condition nodes with custom input/output port models.
+- Modular subtrees referenced via `<SubTree ID="...">`.
 
 ---
 
-## 📄 License
+## Roadmap
+
+- [x] Horizontal node graph canvas and layout engine
+- [x] Blackboard port cards and directional data wiring
+- [x] Bidirectional XML editor with live synchronization
+- [x] Multi-theme engine (Claude, Dracula, Minimal)
+- [x] Native Tauri desktop shell
+- [ ] Workspace node definition scanner (`TreeNodesModel`)
+- [ ] Cyclic dependency and undefined blackboard key CLI linting (`btview`)
+- [ ] Real-time execution telemetry bridge (ZeroMQ / WebSocket for live tick status)
+
+---
+
+## License
 
 This project is licensed under the [MIT License](LICENSE).

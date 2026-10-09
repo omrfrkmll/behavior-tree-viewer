@@ -9,6 +9,8 @@ import {
 } from '../ui/select';
 import { ThemeManager } from '../../ui/theme';
 import { ThemeCustomizer } from './theme-customizer';
+import { WindowControls } from './window-controls';
+import { TauriBridge } from '../../features/tauri/tauri-bridge';
 import {
   FolderOpen,
   FolderGit2,
@@ -26,6 +28,7 @@ import {
 export interface NavbarCallbacks {
   onTreeSelected: (index: number) => void;
   onOpenFileContent: (xmlContent: string) => void;
+  onOpenFile?: () => void;
   onOpenWorkspace: () => void;
   onExportXml: () => void;
   onToggleCodeView: () => void;
@@ -79,13 +82,21 @@ export const NavbarView: React.FC<NavbarViewProps> = ({
   };
 
   return (
-    <div className="flex items-center justify-between w-full h-full">
+    <div
+      data-tauri-drag-region
+      onDoubleClick={() => {
+        if (TauriBridge.isTauri()) {
+          TauriBridge.toggleMaximizeWindow();
+        }
+      }}
+      className="flex items-center justify-between w-full h-full select-none"
+    >
       {/* Brand */}
-      <div className="flex items-center gap-2">
-        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground font-mono font-bold text-[11px] shadow-xs">
+      <div className="flex items-center gap-2 cursor-default" data-tauri-drag-region>
+        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-mono font-bold text-[11px] shadow-sm select-none">
           BT
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col select-none" data-tauri-drag-region>
           <span className="text-xs font-semibold tracking-tight text-foreground leading-none">
             BT Studio
           </span>
@@ -123,7 +134,13 @@ export const NavbarView: React.FC<NavbarViewProps> = ({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => {
+            if (callbacks.onOpenFile) {
+              callbacks.onOpenFile();
+            } else {
+              fileInputRef.current?.click();
+            }
+          }}
           title="Open BehaviorTree XML file"
         >
           <FolderOpen />
@@ -231,6 +248,7 @@ export const NavbarView: React.FC<NavbarViewProps> = ({
         >
           {isDark ? <Sun /> : <Moon />}
         </Button>
+        <WindowControls />
       </div>
     </div>
   );

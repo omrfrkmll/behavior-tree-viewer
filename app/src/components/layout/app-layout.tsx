@@ -70,7 +70,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* Top Navbar Mount */}
       <header
         id="top-navbar"
-        className="h-11 w-full border-b border-border bg-card px-3 flex items-center justify-between flex-shrink-0 select-none z-20"
+        data-tauri-drag-region
+        className="h-11 w-full border-b border-border/70 bg-card/95 backdrop-blur-md px-3 flex items-center justify-between flex-shrink-0 select-none z-20"
       >
         {navbar}
       </header>

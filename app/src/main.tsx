@@ -16,6 +16,7 @@ import { ThemeManager } from './ui/theme';
 import { xmlService } from './features/xml/xml-service';
 import { simulationService } from './features/simulation/simulation-service';
 import { workspaceScannerService, DiscoveredTreeFile } from './features/workspace/workspace-scanner';
+import { TauriBridge } from './features/tauri/tauri-bridge';
 import { DEFAULT_NODES } from './constants/default-nodes';
 import { INITIAL_DEMO_XML, DEFAULT_BLACKBOARD_TAGS } from './constants/data';
 import { BehaviorTree, BtNode, InputTag, NodeModel, NodeStatus } from './types';
@@ -205,7 +206,25 @@ export const StudioApp: React.FC = () => {
     setXmlVersion(v => v + 1);
   }, []);
 
+  const handleOpenFile = useCallback(async () => {
+    if (TauriBridge.isTauri()) {
+      const res = await TauriBridge.openFileDialog();
+      if (res?.content) {
+        loadXml(res.content);
+      }
+    }
+  }, [loadXml]);
+
   const handleOpenWorkspace = useCallback(async () => {
+    if (TauriBridge.isTauri()) {
+      const res = await TauriBridge.openWorkspaceDialog();
+      if (res && res.files.length > 0) {
+        setDiscoveredFiles(res.files);
+        setActiveTab('explorer');
+      }
+      return;
+    }
+
     if ('showDirectoryPicker' in window) {
       try {
         const dirHandle = await (window as any).showDirectoryPicker();
@@ -220,11 +239,15 @@ export const StudioApp: React.FC = () => {
     }
   }, []);
 
-  const handleExportXml = useCallback(() => {
+  const handleExportXml = useCallback(async () => {
     const tree = treesRef.current[activeTreeIndexRef.current];
     if (!tree) return;
     const xml = xmlService.serializeTreeToXml(tree);
-    xmlService.downloadXmlFile(xml, `${tree.id}.xml`);
+    if (TauriBridge.isTauri()) {
+      await TauriBridge.saveFileDialog(xml, `${tree.id}.xml`);
+    } else {
+      xmlService.downloadXmlFile(xml, `${tree.id}.xml`);
+    }
   }, []);
 
   const handleCopyXml = useCallback(async () => {
@@ -427,6 +450,7 @@ export const StudioApp: React.FC = () => {
           callbacks={{
             onTreeSelected: handleTreeSelected,
             onOpenFileContent: loadXml,
+            onOpenFile: handleOpenFile,
             onOpenWorkspace: handleOpenWorkspace,
             onExportXml: handleExportXml,
             onToggleCodeView: () => setCodeViewOpen(prev => !prev),
