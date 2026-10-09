@@ -84,7 +84,7 @@ export class DecoratorCardShape implements NodeShapeRenderer {
     const ports = model?.ports || [];
     const hasPorts = ports.length > 0;
     const customNameExtra = (node.customName && node.customName !== node.name) ? 12 : 0;
-    const isSequenceChild = node.parent?.name === 'Sequence';
+    const isSequenceChild = Boolean(node.parent?.name.toLowerCase().includes('sequence'));
     const seq = isSequenceChild ? node.parent! : null;
     const childIdx = seq ? seq.children.indexOf(node) : -1;
 

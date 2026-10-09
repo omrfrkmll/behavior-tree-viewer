@@ -368,14 +368,21 @@ export const StudioApp: React.FC = () => {
       if (e.key === 'Delete' || e.key === 'Backspace') {
         const tag = (document.activeElement as HTMLElement)?.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-        if (canvasRef.current?.getSelectedTag()) {
-          canvasRef.current.deleteSelectedTag();
+
+        const selectedTags = canvasRef.current?.getSelectedTags() || [];
+        const selectedNodes = canvasRef.current?.getSelectedNodes() || [];
+
+        if (selectedTags.length > 0 || selectedNodes.length > 0) {
+          if (selectedTags.length > 0) {
+            canvasRef.current?.deleteSelectedTags();
+          }
+          if (selectedNodes.length > 0) {
+            handleDeleteNodes(selectedNodes);
+          }
           return;
         }
-        const selectedNodes = canvasRef.current?.getSelectedNodes() || [];
-        if (selectedNodes.length > 0) {
-          handleDeleteNodes(selectedNodes);
-        } else if (selectedNodeRef.current) {
+
+        if (selectedNodeRef.current) {
           handleDeleteNodes([selectedNodeRef.current]);
         }
       }

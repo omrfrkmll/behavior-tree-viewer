@@ -46,48 +46,4 @@ const extensionConfig = {
   },
 };
 
-const webpack = require('webpack');
-
-// ...
-
-/** @type WebpackConfig */
-const webviewConfig = {
-  target: 'web', // The webview runs in a browser context
-  mode: 'none', // this leaves the source code as close as possible to the original (when packaging we set this to 'production')
-  entry: './src/webview/main.ts', // Entry point for the webview script
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'webview.js', // Output file for the webview
-  },
-  resolve: {
-    // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
-    extensions: ['.ts', '.js'],
-    fallback: {
-      "stream": require.resolve("stream-browserify"),
-      "buffer": require.resolve("buffer/")
-    }
-  },
-  plugins: [
-    new webpack.ProvidePlugin({
-      Buffer: ['buffer', 'Buffer'],
-      process: 'process/browser',
-    }),
-  ],
-  module: {
-    rules: [
-      {
-        test: /\.ts$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: 'ts-loader'
-          }
-        ]
-      }
-    ]
-  },
-  devtool: 'nosources-source-map',
-};
-
-
-module.exports = [extensionConfig, webviewConfig];
+module.exports = extensionConfig;

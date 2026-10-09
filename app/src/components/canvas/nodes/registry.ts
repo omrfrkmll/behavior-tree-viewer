@@ -17,10 +17,10 @@ export class NodeShapeRegistry {
   private static registry: RegisteredShapeEntry[] = [];
 
   static {
-    // 1. Sequence C-Bracket container
+    // 1. Sequence container (Sequence, ReactiveSequence, PipelineSequence, etc.)
     this.register(
       new SequenceBracketShape(),
-      node => node.name === 'Sequence'
+      node => node.name.toLowerCase().includes('sequence')
     );
 
     // 2. Fallback / Recovery dual-output card

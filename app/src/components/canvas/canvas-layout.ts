@@ -3,15 +3,17 @@ import { NodeShapeRegistry } from './nodes/registry';
 
 export const CANVAS_CONSTANTS = {
   NODE_WIDTH: 230,
-  SEQUENCE_WIDTH: 284,
+  SEQUENCE_WIDTH: 298,
   ROW_HEIGHT: 20,
   HEADER_HEIGHT: 32,
-  SPINE_WIDTH: 26,
+  SPINE_WIDTH: 28,
+  SEQUENCE_PAD_LEFT: 24,
+  SEQUENCE_PAD_RIGHT: 16,
   SEQUENCE_HEADER_H: 36,
   SEQUENCE_FOOTER_H: 22,
   SEQUENCE_PAD_TOP: 10,
   SEQUENCE_PAD_BOT: 10,
-  SEQUENCE_CHILD_GAP: 12,
+  SEQUENCE_CHILD_GAP: 14,
   SEQUENCE_ADD_BTN_H: 24,
 };
 
@@ -127,22 +129,19 @@ export class CanvasLayoutService {
 
     if (isContainer) {
       const spineW = CANVAS_CONSTANTS.SPINE_WIDTH;
-      const padLeft = 14;
-      const childW = CANVAS_CONSTANTS.NODE_WIDTH;
-      const childCenterX = cx - nodeW / 2 + spineW + padLeft + childW / 2;
-
+      const padLeft = CANVAS_CONSTANTS.SEQUENCE_PAD_LEFT;
       const topH = CANVAS_CONSTANTS.SEQUENCE_HEADER_H;
       const padTop = CANVAS_CONSTANTS.SEQUENCE_PAD_TOP;
       const cardH = (node as any)._cardHeight || this.getNodeHeight(node, customModels);
       let currentY = cy - cardH / 2 + topH + padTop;
       const childGap = CANVAS_CONSTANTS.SEQUENCE_CHILD_GAP;
 
-      // 1. Position direct children compactly inside the C-bracket mouth
+      // 1. Position direct children compactly inside the container column
       node.children.forEach(child => {
         const isChildContainer = NodeShapeRegistry.isContainer(child);
-        const ch = isChildContainer
-          ? this.getNodeHeight(child, customModels)
-          : this.getBasicNodeHeight(child, customModels);
+        const childW = this.getNodeWidth(child);
+        const ch = this.getNodeHeight(child, customModels);
+        const childCenterX = (cx - nodeW / 2 + spineW + padLeft) + childW / 2;
         const childCenterY = currentY + ch / 2;
 
         child.x = childCenterX;
@@ -297,32 +296,18 @@ export class CanvasLayoutService {
   }
 
   public static layoutContainerDirectChildren(container: BtNode, customModels: NodeModel[]) {
-    if (!NodeShapeRegistry.isContainer(container) || !container.children) return;
-    const cx = container.x ?? 0;
-    const cy = container.y ?? 0;
-    const nodeW = this.getNodeWidth(container);
-    const spineW = CANVAS_CONSTANTS.SPINE_WIDTH;
-    const padLeft = 14;
-    const childW = CANVAS_CONSTANTS.NODE_WIDTH;
-    const childCenterX = cx - nodeW / 2 + spineW + padLeft + childW / 2;
+    this.relayoutTree(container, customModels);
+  }
 
-    const topH = CANVAS_CONSTANTS.SEQUENCE_HEADER_H;
-    const padTop = CANVAS_CONSTANTS.SEQUENCE_PAD_TOP;
-    delete (container as any)._cardHeight;
-    delete (container as any)._slotHeight;
-    const cardH = this.getNodeHeight(container, customModels);
-    let currentY = cy - cardH / 2 + topH + padTop;
-    const childGap = CANVAS_CONSTANTS.SEQUENCE_CHILD_GAP;
-
-    container.children.forEach(child => {
-      const isChildContainer = NodeShapeRegistry.isContainer(child);
-      const ch = isChildContainer
-        ? this.getNodeHeight(child, customModels)
-        : this.getBasicNodeHeight(child, customModels);
-      child.x = childCenterX;
-      child.y = currentY + ch / 2;
-      currentY += ch + childGap;
-    });
+  public static relayoutTree(node: BtNode, customModels: NodeModel[]) {
+    let top = node;
+    while (top.parent) {
+      top = top.parent;
+    }
+    const currentX = top.x ?? 180;
+    const currentY = top.y ?? 0;
+    this.calculateSubtreeHeights(top, customModels);
+    this.assignPositions(top, currentX, currentY, customModels);
   }
 }
 

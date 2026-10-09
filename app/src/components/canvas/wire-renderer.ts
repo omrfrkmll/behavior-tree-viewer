@@ -45,13 +45,21 @@ export class WireRenderer {
         const sIdx = d.source.children.indexOf(d.target);
         const portType = d.target.parentPort || ((hasDualOut && sIdx > 0) ? 'failure' : (hasDualOut ? 'success' : 'out'));
 
-        if (portType === 'failure') cls += ' stroke-red-500 [stroke-dasharray:8_6]';
-        else if (portType === 'success') cls += ' stroke-emerald-500';
-        else cls += ' stroke-blue-500 dark:stroke-blue-400';
+        if (portType === 'failure') {
+          cls += ' stroke-[var(--flow-failure,var(--destructive))] [stroke-dasharray:8_6]';
+        } else if (portType === 'success') {
+          cls += ' stroke-[var(--flow-success,#10b981)]';
+        } else {
+          cls += ' stroke-primary/80 dark:stroke-primary/85';
+        }
 
-        if (d.target.status === NodeStatus.RUNNING) cls += ' stroke-amber-500 [stroke-dasharray:8_6] [animation:wire-flow_0.8s_linear_infinite]';
-        else if (d.target.status === NodeStatus.SUCCESS) cls += ' !stroke-emerald-500';
-        else if (d.target.status === NodeStatus.FAILURE) cls += ' !stroke-red-500';
+        if (d.target.status === NodeStatus.RUNNING) {
+          cls += ' stroke-amber-500 [stroke-dasharray:8_6] [animation:wire-flow_0.8s_linear_infinite]';
+        } else if (d.target.status === NodeStatus.SUCCESS) {
+          cls += ' !stroke-[var(--flow-success,#10b981)]';
+        } else if (d.target.status === NodeStatus.FAILURE) {
+          cls += ' !stroke-[var(--flow-failure,var(--destructive))]';
+        }
         return cls;
       })
       .on('click', (event, d) => {
@@ -79,7 +87,7 @@ export class WireRenderer {
 
     all
       .attr('id', d => `data-wire-${d.id}`)
-      .attr('class', 'wire wire-data fill-none stroke-[2.5px] stroke-sky-500 [stroke-dasharray:8_6] stroke-round cursor-pointer transition-[stroke,stroke-width] duration-150 hover:!stroke-destructive hover:!stroke-[3.5px]')
+      .attr('class', 'wire wire-data fill-none stroke-[2.5px] stroke-accent-foreground/75 [stroke-dasharray:8_6] stroke-round cursor-pointer transition-[stroke,stroke-width] duration-150 hover:!stroke-destructive hover:!stroke-[3.5px]')
       .attr('d', d => {
         const targetNode = allNodes.find(n => n.id === d.targetNodeId);
         if (!targetNode) return '';
@@ -102,7 +110,7 @@ export class WireRenderer {
     dataWiresLayer: d3.Selection<SVGGElement, unknown, HTMLElement, any>,
     tagNodes: TagNode[],
     allNodes: BtNode[],
-    selectedTag: TagNode | null,
+    selectedTags: Set<TagNode> | TagNode | null,
     customModels: NodeModel[],
     callbacks: WireRendererCallbacks
   ) {
@@ -256,7 +264,7 @@ export class WireRenderer {
 
     const allTagNodes = enter.merge(selection as any);
     allTagNodes
-      .classed('selected', d => selectedTag === d)
+      .classed('selected', d => selectedTags instanceof Set ? selectedTags.has(d) : selectedTags === d)
       .attr('data-id', d => d.id)
       .attr('transform', d => `translate(${d.x},${d.y})`);
   }
@@ -265,35 +273,29 @@ export class WireRenderer {
     wiresLayer: d3.Selection<SVGGElement, unknown, HTMLElement, any>,
     dataWiresLayer: d3.Selection<SVGGElement, unknown, HTMLElement, any>,
     allNodes: BtNode[],
-    tagNodes: TagNode[],
+    _tagNodes: TagNode[],
     customModels: NodeModel[]
   ) {
-    allNodes.forEach(curr => {
-      if (curr.children && !NodeShapeRegistry.isContainer(curr)) {
-        curr.children.forEach(child => {
-          const outSockets = CanvasLayoutService.getNodeOutputSockets(curr);
-          const hasDualOut = outSockets.length > 1;
-          const sIdx = curr.children.indexOf(child);
-          const portType = child.parentPort || ((hasDualOut && sIdx > 0) ? 'failure' : (hasDualOut ? 'success' : 'out'));
-          const sPos = CanvasLayoutService.getSocketCoords(curr, portType as any, customModels);
-          const tPos = CanvasLayoutService.getSocketCoords(child, 'in', customModels);
-          wiresLayer.select(`#wire-${curr.id}-${child.id}`)
-            .attr('d', computeBezierWire(sPos.x, sPos.y, tPos.x, tPos.y));
-        });
-      }
-    });
+    wiresLayer.selectAll<SVGPathElement, { source: BtNode; target: BtNode }>('path.wire')
+      .attr('d', d => {
+        const outSockets = CanvasLayoutService.getNodeOutputSockets(d.source);
+        const hasDualOut = outSockets.length > 1;
+        const sIdx = d.source.children ? d.source.children.indexOf(d.target) : -1;
+        const portType = d.target.parentPort || ((hasDualOut && sIdx > 0) ? 'failure' : (hasDualOut ? 'success' : 'out'));
+        const sPos = CanvasLayoutService.getSocketCoords(d.source, portType as any, customModels);
+        const tPos = CanvasLayoutService.getSocketCoords(d.target, 'in', customModels);
+        return computeBezierWire(sPos.x, sPos.y, tPos.x, tPos.y);
+      });
 
-    tagNodes.forEach(tag => {
-      const targetNode = allNodes.find(n => n.id === tag.targetNodeId);
-      if (targetNode) {
-        const targetPos = CanvasLayoutService.getParameterSocketCoords(targetNode, tag.targetPortName, customModels);
-        const isOutput = tag.direction === 'output';
-        const pathD = isOutput
-          ? computeBezierWire(targetPos.x, targetPos.y, tag.x - 67.5, tag.y)
-          : computeBezierWire(tag.x + 67.5, tag.y, targetPos.x, targetPos.y);
-        dataWiresLayer.select(`#data-wire-${tag.id}`)
-          .attr('d', pathD);
-      }
-    });
+    dataWiresLayer.selectAll<SVGPathElement, TagNode>('path.wire-data')
+      .attr('d', d => {
+        const targetNode = allNodes.find(n => n.id === d.targetNodeId);
+        if (!targetNode) return '';
+        const targetPos = CanvasLayoutService.getParameterSocketCoords(targetNode, d.targetPortName, customModels);
+        const isOutput = d.direction === 'output';
+        return isOutput
+          ? computeBezierWire(targetPos.x, targetPos.y, d.x - 67.5, d.y)
+          : computeBezierWire(d.x + 67.5, d.y, targetPos.x, targetPos.y);
+      });
   }
 }

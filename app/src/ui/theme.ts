@@ -84,6 +84,7 @@ export class ThemeManager {
   private static fontMono: FontMonoId = 'default';
   private static listeners: Set<ThemeChangeListener> = new Set();
   private static initialized: boolean = false;
+  private static animationsEnabled: boolean = true;
 
   public static init() {
     if (this.initialized) return;
@@ -110,6 +111,11 @@ export class ThemeManager {
     const savedFontMono = localStorage.getItem('bt_font_mono') as FontMonoId | null;
     if (savedFontMono && FONT_MONO_OPTIONS.some((f) => f.id === savedFontMono)) {
       this.fontMono = savedFontMono;
+    }
+
+    const savedAnim = localStorage.getItem('bt_animations');
+    if (savedAnim !== null) {
+      this.animationsEnabled = savedAnim === 'true';
     }
 
     this.applyAll();
@@ -162,6 +168,31 @@ export class ThemeManager {
     } else {
       html.setAttribute('data-font-mono', this.fontMono);
     }
+
+    // Apply animation preference
+    if (this.animationsEnabled) {
+      html.removeAttribute('data-animations-disabled');
+      html.classList.remove('no-animations');
+    } else {
+      html.setAttribute('data-animations-disabled', 'true');
+      html.classList.add('no-animations');
+    }
+  }
+
+  public static toggleAnimations(): boolean {
+    this.setAnimations(!this.animationsEnabled);
+    return this.animationsEnabled;
+  }
+
+  public static setAnimations(enabled: boolean) {
+    this.animationsEnabled = enabled;
+    localStorage.setItem('bt_animations', enabled ? 'true' : 'false');
+    this.applyAll();
+    this.notify();
+  }
+
+  public static getAnimations(): boolean {
+    return this.animationsEnabled;
   }
 
   public static toggleDarkMode(): boolean {

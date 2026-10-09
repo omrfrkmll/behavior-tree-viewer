@@ -22,12 +22,12 @@ export class SocketsHelper {
     inSocket.append('circle')
       .attr('class', 'fill-[var(--node-bg)] transition-transform duration-150 group-hover/pin:scale-125')
       .attr('r', 5)
-      .attr('stroke', '#0284c7')
+      .attr('stroke', 'var(--primary)')
       .attr('stroke-width', 1.8);
     inSocket.append('circle')
       .attr('class', 'pointer-events-none')
       .attr('r', 2)
-      .attr('fill', '#0284c7');
+      .attr('fill', 'var(--primary)');
 
     return inSocket;
   }
@@ -39,7 +39,7 @@ export class SocketsHelper {
     node: BtNode,
     portType: SocketType,
     callbacks: NodeRendererCallbacks,
-    strokeColor: string = '#3b82f6'
+    strokeColor: string = 'var(--primary)'
   ) {
     const socket = g.append('g')
       .attr('class', `cursor-crosshair group/pin socket-out socket-${portType}`)
@@ -71,7 +71,7 @@ export class SocketsHelper {
     node: BtNode,
     callbacks: NodeRendererCallbacks
   ) {
-    this.renderOutSocket(g, x, ySuccess, node, 'success', callbacks, '#16a34a');
-    this.renderOutSocket(g, x, yFailure, node, 'failure', callbacks, '#dc2626');
+    this.renderOutSocket(g, x, ySuccess, node, 'success', callbacks, 'var(--flow-success, #16a34a)');
+    this.renderOutSocket(g, x, yFailure, node, 'failure', callbacks, 'var(--flow-failure, #dc2626)');
   }
 }

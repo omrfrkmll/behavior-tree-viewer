@@ -45,6 +45,13 @@
   --node-border: oklch(0.86 0 0);
   --grid-dot: oklch(0.205 0 0 / 0.14);
   --grid-line: oklch(0.205 0 0 / 0.05);
+  --cat-control: oklch(0.58 0.18 260);
+  --cat-decorator: oklch(0.68 0.17 65);
+  --cat-action: oklch(0.55 0.16 220);
+  --cat-condition: oklch(0.62 0.15 155);
+  --cat-subtree: oklch(0.60 0.20 320);
+  --flow-success: oklch(0.58 0.15 150);
+  --flow-failure: oklch(0.58 0.22 28);
 }
 
 .dark {
@@ -85,6 +92,13 @@
   --node-border: oklch(0.32 0 0);
   --grid-dot: oklch(0.985 0 0 / 0.12);
   --grid-line: oklch(0.985 0 0 / 0.04);
+  --cat-control: oklch(0.68 0.18 260);
+  --cat-decorator: oklch(0.74 0.17 65);
+  --cat-action: oklch(0.65 0.16 220);
+  --cat-condition: oklch(0.70 0.15 155);
+  --cat-subtree: oklch(0.70 0.20 320);
+  --flow-success: oklch(0.68 0.15 150);
+  --flow-failure: oklch(0.65 0.20 28);
 }
 
 /* ---------------- TweakCN Theme: Minimal Neutral ---------------- */
@@ -128,6 +142,13 @@ html[data-theme="minimal-neutral"] {
   --font-sans: "DM Sans", ui-sans-serif, sans-serif, system-ui;
   --font-mono: "Geist Mono", ui-monospace, monospace;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --cat-control: oklch(0.50 0.08 255);
+  --cat-decorator: oklch(0.55 0.08 65);
+  --cat-action: oklch(0.48 0.08 220);
+  --cat-condition: oklch(0.52 0.08 155);
+  --cat-subtree: oklch(0.50 0.08 310);
+  --flow-success: oklch(0.52 0.09 155);
+  --flow-failure: oklch(0.54 0.12 28);
 }
 
 html[data-theme="minimal-neutral"].dark {
@@ -170,6 +191,13 @@ html[data-theme="minimal-neutral"].dark {
   --font-sans: "DM Sans", ui-sans-serif, sans-serif, system-ui;
   --font-mono: "Geist Mono", ui-monospace, monospace;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --cat-control: oklch(0.65 0.08 255);
+  --cat-decorator: oklch(0.70 0.08 65);
+  --cat-action: oklch(0.62 0.08 220);
+  --cat-condition: oklch(0.66 0.08 155);
+  --cat-subtree: oklch(0.65 0.08 310);
+  --flow-success: oklch(0.65 0.10 155);
+  --flow-failure: oklch(0.62 0.13 28);
 }
 
 /* ---------------- TweakCN Theme: Claude + ---------------- */
@@ -213,6 +241,13 @@ html[data-theme="claude"] {
   --font-sans: "Outfit", sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --cat-control: oklch(0.58 0.13 42);
+  --cat-decorator: oklch(0.65 0.13 75);
+  --cat-action: oklch(0.52 0.10 240);
+  --cat-condition: oklch(0.56 0.11 135);
+  --cat-subtree: oklch(0.55 0.12 330);
+  --flow-success: oklch(0.56 0.12 135);
+  --flow-failure: oklch(0.56 0.16 38);
 }
 
 html[data-theme="claude"].dark {
@@ -224,8 +259,8 @@ html[data-theme="claude"].dark {
   --popover-foreground: oklch(0.9211 0.0040 106.4781);
   --primary: oklch(0.6724 0.1308 38.7559);
   --primary-foreground: oklch(0.1908 0.0020 106.5859);
-  --secondary: oklch(0.9818 0.0054 95.0986);
-  --secondary-foreground: oklch(0.3085 0.0035 106.6039);
+  --secondary: oklch(0.3350 0.0038 106.6000);
+  --secondary-foreground: oklch(0.9576 0.0027 106.4494);
   --muted: oklch(0.2213 0.0038 106.7070);
   --muted-foreground: oklch(0.7713 0.0169 99.0657);
   --accent: oklch(0.2130 0.0078 95.4245);
@@ -255,6 +290,13 @@ html[data-theme="claude"].dark {
   --font-sans: "Outfit", sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --cat-control: oklch(0.68 0.13 42);
+  --cat-decorator: oklch(0.72 0.13 75);
+  --cat-action: oklch(0.62 0.10 240);
+  --cat-condition: oklch(0.66 0.11 135);
+  --cat-subtree: oklch(0.66 0.12 330);
+  --flow-success: oklch(0.66 0.12 135);
+  --flow-failure: oklch(0.65 0.17 38);
 }
 
 /* ---------------- TweakCN Theme: Google ---------------- */
@@ -298,6 +340,13 @@ html[data-theme="google"] {
   --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --cat-control: oklch(0.55 0.20 255);
+  --cat-decorator: oklch(0.70 0.18 80);
+  --cat-action: oklch(0.52 0.18 225);
+  --cat-condition: oklch(0.60 0.18 145);
+  --cat-subtree: oklch(0.60 0.22 330);
+  --flow-success: oklch(0.58 0.18 145);
+  --flow-failure: oklch(0.58 0.22 25);
 }
 
 html[data-theme="google"].dark {
@@ -340,6 +389,13 @@ html[data-theme="google"].dark {
   --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --cat-control: oklch(0.65 0.20 255);
+  --cat-decorator: oklch(0.76 0.18 80);
+  --cat-action: oklch(0.62 0.18 225);
+  --cat-condition: oklch(0.68 0.18 145);
+  --cat-subtree: oklch(0.68 0.22 330);
+  --flow-success: oklch(0.66 0.18 145);
+  --flow-failure: oklch(0.64 0.22 25);
 }
 
 /* ---------------- TweakCN Theme: Dracula Inspired ---------------- */
@@ -383,6 +439,13 @@ html[data-theme="dracula"] {
   --font-sans: "Inter", -apple-system, sans-serif;
   --font-mono: "Fira Code", monospace;
   --font-serif: "Georgia", serif;
+  --cat-control: oklch(0.68 0.18 290);
+  --cat-decorator: oklch(0.78 0.17 95);
+  --cat-action: oklch(0.72 0.15 210);
+  --cat-condition: oklch(0.74 0.18 140);
+  --cat-subtree: oklch(0.70 0.22 330);
+  --flow-success: oklch(0.74 0.18 140);
+  --flow-failure: oklch(0.66 0.22 25);
 }
 
 html[data-theme="dracula"].dark {
@@ -425,6 +488,13 @@ html[data-theme="dracula"].dark {
   --font-sans: "Inter", -apple-system, sans-serif;
   --font-mono: "Fira Code", monospace;
   --font-serif: "Georgia", serif;
+  --cat-control: oklch(0.72 0.18 290);
+  --cat-decorator: oklch(0.80 0.17 95);
+  --cat-action: oklch(0.75 0.15 210);
+  --cat-condition: oklch(0.77 0.18 140);
+  --cat-subtree: oklch(0.73 0.22 330);
+  --flow-success: oklch(0.77 0.18 140);
+  --flow-failure: oklch(0.69 0.22 25);
 }
 
 /* ---------------- Font Theming Overrides ---------------- */
@@ -546,4 +616,99 @@ html[data-font-mono="fira-code"] { --font-mono: "Fira Code", monospace; }
 @keyframes wire-flow {
   from { stroke-dashoffset: 18; }
   to { stroke-dashoffset: 0; }
+}
+
+/* Behavior Tree Sequence Step-by-Step Evaluation Animations */
+@keyframes sequence-branch-eval {
+  0% {
+    stroke-dashoffset: 44;
+    opacity: 0.2;
+    stroke: var(--primary);
+  }
+  /* Tick enters branch and flows towards child */
+  3% {
+    opacity: 1;
+    stroke: var(--primary);
+  }
+  8% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    stroke: var(--primary);
+  }
+  /* Child returns SUCCESS: Illuminates in harmonious theme success tone */
+  12%, 18% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    stroke: var(--flow-success, #10b981);
+    filter: drop-shadow(0 0 3px var(--flow-success, #10b981));
+  }
+  /* Advances to next child down the spine; fades to idle standby */
+  22%, 100% {
+    opacity: 0.2;
+    stroke: var(--primary);
+    filter: none;
+  }
+}
+
+@keyframes sequence-arrow-eval {
+  0% {
+    fill: var(--primary);
+    stroke: var(--primary);
+    opacity: 0.35;
+    filter: none;
+  }
+  3% {
+    opacity: 1;
+    fill: var(--primary);
+    stroke: var(--primary);
+  }
+  12%, 18% {
+    fill: var(--flow-success, #10b981);
+    stroke: var(--flow-success, #10b981);
+    filter: drop-shadow(0 0 3px var(--flow-success, #10b981));
+    opacity: 1;
+  }
+  22%, 100% {
+    fill: var(--primary);
+    stroke: var(--primary);
+    opacity: 0.35;
+    filter: none;
+  }
+}
+
+@keyframes sequence-step-badge {
+  0% {
+    stroke: var(--primary);
+    stroke-opacity: 0.35;
+    stroke-width: 1px;
+  }
+  3% {
+    stroke: var(--primary);
+    stroke-opacity: 1;
+    stroke-width: 1.5px;
+  }
+  12%, 18% {
+    stroke: var(--flow-success, #10b981);
+    stroke-opacity: 1;
+    stroke-width: 1.5px;
+  }
+  22%, 100% {
+    stroke: var(--primary);
+    stroke-opacity: 0.35;
+    stroke-width: 1px;
+  }
+}
+
+/* Animation Toggle Disabled State */
+html[data-animations-disabled="true"] .wire,
+html[data-animations-disabled="true"] .sequence-branch path,
+html[data-animations-disabled="true"] .sequence-branch circle,
+html[data-animations-disabled="true"] .node-card,
+html[data-animations-disabled="true"] [style*="animation"],
+html.no-animations .wire,
+html.no-animations .sequence-branch path,
+html.no-animations .sequence-branch circle,
+html.no-animations .node-card,
+html.no-animations [style*="animation"] {
+  animation: none !important;
 }

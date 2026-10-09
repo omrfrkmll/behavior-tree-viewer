@@ -31,13 +31,18 @@ export class PortsHelper {
         .attr('rx', 4);
 
       // Port Direction & Label
-      g.append('text')
-        .attr('class', `font-mono text-[10px] font-medium select-none pointer-events-none ${
-          isInput ? 'fill-sky-600 dark:fill-sky-400' : 'fill-emerald-600 dark:fill-emerald-400'
-        }`)
+      const labelText = g.append('text')
+        .attr('class', 'font-mono text-[10px] font-medium select-none pointer-events-none')
         .attr('x', -width / 2 + 14)
-        .attr('y', rowY + 4)
-        .text(`${isInput ? '▶' : '◀'} ${p.name}`);
+        .attr('y', rowY + 4);
+
+      labelText.append('tspan')
+        .attr('fill', isInput ? 'var(--primary)' : 'var(--flow-success, #16a34a)')
+        .text(isInput ? '▶ ' : '◀ ');
+
+      labelText.append('tspan')
+        .attr('class', 'fill-foreground/80')
+        .text(p.name);
 
       // Port Combobox Select Box
       const selectW = 86;
@@ -85,16 +90,17 @@ export class PortsHelper {
           callbacks.onStartConnectingParam(node, p.name, p.type || 'string');
         });
 
+      const pinColor = isInput ? 'var(--primary)' : 'var(--flow-success, #16a34a)';
       portPin.append('circle').attr('r', 10).attr('fill', 'transparent');
       portPin.append('circle')
         .attr('class', 'fill-[var(--node-bg)] transition-transform duration-150 group-hover/pin:scale-125')
         .attr('r', 4.5)
-        .attr('stroke', isInput ? '#0284c7' : '#16a34a')
+        .attr('stroke', pinColor)
         .attr('stroke-width', 1.5);
       portPin.append('circle')
         .attr('class', 'pointer-events-none')
         .attr('r', 1.8)
-        .attr('fill', isInput ? '#0284c7' : '#16a34a');
+        .attr('fill', pinColor);
     });
   }
 }

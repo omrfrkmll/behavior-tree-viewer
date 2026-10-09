@@ -252,6 +252,16 @@ export class ContextMenuComponent {
         onClick: () => this.callbacks.onAddNode('Sequence', 'Control', x, y)
       },
       {
+        label: 'Add ReactiveSequence Node',
+        icon: <Plus />,
+        onClick: () => this.callbacks.onAddNode('ReactiveSequence', 'Control', x, y)
+      },
+      {
+        label: 'Add PipelineSequence Node',
+        icon: <Plus />,
+        onClick: () => this.callbacks.onAddNode('PipelineSequence', 'Control', x, y)
+      },
+      {
         label: 'Add Fallback Node',
         icon: <Plus />,
         onClick: () => this.callbacks.onAddNode('Fallback', 'Control', x, y)

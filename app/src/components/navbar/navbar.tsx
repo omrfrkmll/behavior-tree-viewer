@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '../ui/button';
 import {
   Select,
@@ -18,7 +18,9 @@ import {
   Play,
   RotateCcw,
   Sun,
-  Moon
+  Moon,
+  Zap,
+  ZapOff
 } from 'lucide-react';
 
 export interface NavbarCallbacks {
@@ -45,10 +47,23 @@ export const NavbarView: React.FC<NavbarViewProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDark, setIsDark] = useState(() => ThemeManager.getIsDark());
+  const [animationsEnabled, setAnimationsEnabled] = useState(() => ThemeManager.getAnimations());
+
+  useEffect(() => {
+    return ThemeManager.subscribe(() => {
+      setIsDark(ThemeManager.getIsDark());
+      setAnimationsEnabled(ThemeManager.getAnimations());
+    });
+  }, []);
 
   const toggleDarkMode = () => {
     const nextDark = ThemeManager.toggleDarkMode();
     setIsDark(nextDark);
+  };
+
+  const toggleAnimations = () => {
+    const next = ThemeManager.toggleAnimations();
+    setAnimationsEnabled(next);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,8 +209,18 @@ export const NavbarView: React.FC<NavbarViewProps> = ({
         </Button>
       </div>
 
-      {/* Right Toolbar: Theme Customizer & Dark Mode Toggle */}
+      {/* Right Toolbar: Animation Toggle, Theme Customizer & Dark Mode Toggle */}
       <div className="flex items-center gap-1.5">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          onClick={toggleAnimations}
+          title={animationsEnabled ? "Disable Canvas Animations" : "Enable Canvas Animations"}
+          className={animationsEnabled ? "text-primary hover:text-primary" : "text-muted-foreground opacity-60 hover:opacity-100"}
+        >
+          {animationsEnabled ? <Zap className="size-4 fill-primary/20 text-primary" /> : <ZapOff className="size-4" />}
+        </Button>
         <ThemeCustomizer />
         <Button
           type="button"

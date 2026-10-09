@@ -2,12 +2,12 @@ import { NodeCategory } from '../types';
 
 export function getCategoryColor(category: NodeCategory): string {
   switch (category) {
-    case NodeCategory.Control: return '#6366f1';    // Muted Indigo
-    case NodeCategory.Decorator: return '#d97706';  // Muted Amber
-    case NodeCategory.Action: return '#0284c7';     // Muted Blue
-    case NodeCategory.Condition: return '#059669';  // Muted Emerald
-    case NodeCategory.SubTree: return '#db2777';    // Muted Rose
-    default: return '#71717a';
+    case NodeCategory.Control: return 'var(--cat-control, #6366f1)';
+    case NodeCategory.Decorator: return 'var(--cat-decorator, #d97706)';
+    case NodeCategory.Action: return 'var(--cat-action, #0284c7)';
+    case NodeCategory.Condition: return 'var(--cat-condition, #059669)';
+    case NodeCategory.SubTree: return 'var(--cat-subtree, #db2777)';
+    default: return 'var(--muted-foreground, #71717a)';
   }
 }
 
