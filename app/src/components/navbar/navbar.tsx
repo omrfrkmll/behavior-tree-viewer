@@ -22,7 +22,8 @@ import {
   Sun,
   Moon,
   Zap,
-  ZapOff
+  ZapOff,
+  Home
 } from 'lucide-react';
 
 export interface NavbarCallbacks {
@@ -35,18 +36,21 @@ export interface NavbarCallbacks {
   onAutoLayout: () => void;
   onSimulateStep: () => void;
   onResetSimulation: () => void;
+  onToggleWelcome?: () => void;
 }
 
 export interface NavbarViewProps {
   treeIds: string[];
   activeTreeIndex: number;
   callbacks: NavbarCallbacks;
+  isWelcomeScreen?: boolean;
 }
 
 export const NavbarView: React.FC<NavbarViewProps> = ({
   treeIds,
   activeTreeIndex,
-  callbacks
+  callbacks,
+  isWelcomeScreen = false
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDark, setIsDark] = useState(() => ThemeManager.getIsDark());
@@ -91,23 +95,41 @@ export const NavbarView: React.FC<NavbarViewProps> = ({
       }}
       className="flex items-center justify-between w-full h-full select-none"
     >
-      {/* Brand */}
-      <div className="flex items-center gap-2 cursor-default" data-tauri-drag-region>
-        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-mono font-bold text-[11px] shadow-sm select-none">
-          BT
-        </div>
-        <div className="flex flex-col select-none" data-tauri-drag-region>
-          <span className="text-xs font-semibold tracking-tight text-foreground leading-none">
-            BT Studio
-          </span>
-          <span className="text-[10px] text-muted-foreground font-medium mt-0.5">ROS 2 & BT.CPP</span>
-        </div>
+      {/* Brand & Home */}
+      <div className="flex items-center gap-1.5 cursor-default" data-tauri-drag-region>
+        <button
+          type="button"
+          onClick={() => callbacks.onToggleWelcome?.()}
+          className="flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-muted/70 transition-colors text-left"
+          title="Start Screen"
+        >
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-mono font-bold text-[11px] shadow-sm select-none">
+            BT
+          </div>
+          <div className="flex flex-col select-none" data-tauri-drag-region>
+            <span className="text-xs font-semibold tracking-tight text-foreground leading-none">
+              BT Studio
+            </span>
+            <span className="text-[10px] text-muted-foreground font-medium mt-0.5">ROS 2 & BT.CPP</span>
+          </div>
+        </button>
+
+        <Button
+          type="button"
+          variant={isWelcomeScreen ? "secondary" : "ghost"}
+          size="icon-sm"
+          onClick={() => callbacks.onToggleWelcome?.()}
+          title="Home Dashboard"
+          className={`h-7 w-7 ${isWelcomeScreen ? "bg-secondary text-primary font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          <Home className="size-3.5" />
+        </Button>
       </div>
 
       {/* Center Action Toolbar */}
       <div className="flex items-center gap-1.5">
-        {/* Tree Selector */}
-        {treeIds.length > 0 && (
+        {/* Tree Selector (editor mode only) */}
+        {!isWelcomeScreen && treeIds.length > 0 && (
           <div className="w-[160px]">
             <Select
               value={activeTreeIndex.toString()}
@@ -127,7 +149,7 @@ export const NavbarView: React.FC<NavbarViewProps> = ({
           </div>
         )}
 
-        <div className="h-4 w-px bg-border mx-1" />
+        {!isWelcomeScreen && <div className="h-4 w-px bg-border mx-1" />}
 
         {/* File Operations */}
         <Button
@@ -165,65 +187,69 @@ export const NavbarView: React.FC<NavbarViewProps> = ({
           Workspace
         </Button>
 
-        <Button
-          type="button"
-          variant="default"
-          size="sm"
-          onClick={() => callbacks.onExportXml()}
-          title="Export XML"
-        >
-          <Download />
-          Export
-        </Button>
+        {!isWelcomeScreen && (
+          <>
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={() => callbacks.onExportXml()}
+              title="Export XML"
+            >
+              <Download />
+              Export
+            </Button>
 
-        <div className="h-4 w-px bg-border mx-1" />
+            <div className="h-4 w-px bg-border mx-1" />
 
-        {/* Realtime Code View Toggle */}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => callbacks.onToggleCodeView()}
-          title="Toggle Realtime BehaviorTree XML View"
-        >
-          <Code2 />
-          XML Code
-        </Button>
+            {/* Realtime Code View Toggle */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => callbacks.onToggleCodeView()}
+              title="Toggle Realtime BehaviorTree XML View"
+            >
+              <Code2 />
+              XML Code
+            </Button>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => callbacks.onAutoLayout()}
-          title="Auto Align Layout"
-        >
-          <LayoutGrid />
-          Align
-        </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => callbacks.onAutoLayout()}
+              title="Auto Align Layout"
+            >
+              <LayoutGrid />
+              Align
+            </Button>
 
-        <div className="h-4 w-px bg-border mx-1" />
+            <div className="h-4 w-px bg-border mx-1" />
 
-        {/* Simulation Buttons */}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => callbacks.onSimulateStep()}
-          title="Tick Tree Simulation"
-        >
-          <Play className="fill-current text-emerald-500" />
-          Tick
-        </Button>
+            {/* Simulation Buttons */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => callbacks.onSimulateStep()}
+              title="Tick Tree Simulation"
+            >
+              <Play className="fill-current text-emerald-500" />
+              Tick
+            </Button>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-sm"
-          onClick={() => callbacks.onResetSimulation()}
-          title="Reset Simulation"
-        >
-          <RotateCcw />
-        </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              onClick={() => callbacks.onResetSimulation()}
+              title="Reset Simulation"
+            >
+              <RotateCcw />
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Right Toolbar: Animation Toggle, Theme Customizer & Dark Mode Toggle */}

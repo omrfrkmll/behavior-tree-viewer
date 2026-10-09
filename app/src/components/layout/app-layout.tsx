@@ -19,6 +19,9 @@ export interface AppLayoutProps {
   selectedNode: BtNode | null;
   gridMode: 'dots' | 'lines' | 'empty';
   onGridModeChange: (mode: 'dots' | 'lines' | 'empty') => void;
+  isWelcomeScreen?: boolean;
+  welcomeSidebar?: React.ReactNode;
+  welcomeView?: React.ReactNode;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -34,7 +37,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   codeViewOpen,
   selectedNode,
   gridMode,
-  onGridModeChange
+  onGridModeChange,
+  isWelcomeScreen = false,
+  welcomeSidebar,
+  welcomeView
 }) => {
   const [drawerWidth, setDrawerWidth] = React.useState<number>(460);
   const [isResizing, setIsResizing] = React.useState<boolean>(false);
@@ -86,80 +92,105 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           id="left-sidebar"
           className="w-[270px] flex-shrink-0 h-full bg-card border-r border-border flex flex-col z-10"
         >
-          <div className="sidebar-tabs p-2 border-b border-border bg-card">
-            {sidebarTabs}
-          </div>
-          <div
-            id="palette-view"
-            className={`sidebar-pane flex-1 overflow-y-auto flex-col ${activeTab === 'palette' ? 'flex' : 'hidden'}`}
-          >
-            {palette}
-          </div>
-          <div
-            id="explorer-view"
-            className={`sidebar-pane flex-1 overflow-y-auto flex-col ${activeTab === 'explorer' ? 'flex' : 'hidden'}`}
-          >
-            {explorer}
-          </div>
-          <div
-            id="tags-view"
-            className={`sidebar-pane flex-1 overflow-y-auto flex-col ${activeTab === 'tags' ? 'flex' : 'hidden'}`}
-          >
-            {blackboard}
-          </div>
+          {isWelcomeScreen ? (
+            <div className="flex-1 overflow-y-auto flex flex-col">
+              {welcomeSidebar}
+            </div>
+          ) : (
+            <>
+              <div className="sidebar-tabs p-2 border-b border-border bg-card">
+                {sidebarTabs}
+              </div>
+              <div
+                id="palette-view"
+                className={`sidebar-pane flex-1 overflow-y-auto flex-col ${activeTab === 'palette' ? 'flex' : 'hidden'}`}
+              >
+                {palette}
+              </div>
+              <div
+                id="explorer-view"
+                className={`sidebar-pane flex-1 overflow-y-auto flex-col ${activeTab === 'explorer' ? 'flex' : 'hidden'}`}
+              >
+                {explorer}
+              </div>
+              <div
+                id="tags-view"
+                className={`sidebar-pane flex-1 overflow-y-auto flex-col ${activeTab === 'tags' ? 'flex' : 'hidden'}`}
+              >
+                {blackboard}
+              </div>
+            </>
+          )}
         </aside>
 
-        {/* Center Blueprint Canvas */}
+        {/* Center Blueprint Canvas / Welcome Dashboard */}
         <main
           id="canvas-container"
-          className="relative flex-1 h-full w-full overflow-hidden bg-background"
+          className="relative flex-1 h-full w-full overflow-hidden bg-background flex flex-col"
         >
+          {isWelcomeScreen && (
+            <div className="flex-1 h-full w-full overflow-hidden flex flex-col z-20">
+              {welcomeView}
+            </div>
+          )}
+
           {/* Blueprint Grid Pattern */}
           <div
             id="blueprint-grid"
             className={`absolute inset-0 w-full h-full pointer-events-none ${
-              gridMode === 'empty' ? 'grid-empty' : gridMode === 'lines' ? 'grid-lines' : 'grid-dots'
+              isWelcomeScreen
+                ? 'hidden'
+                : gridMode === 'empty'
+                ? 'grid-empty'
+                : gridMode === 'lines'
+                ? 'grid-lines'
+                : 'grid-dots'
             }`}
           />
 
           {/* Floating Canvas Grid Controls */}
-          <div
-            id="canvas-grid-controls"
-            className="absolute top-3 right-3 inline-flex items-center rounded-lg bg-muted p-1 text-muted-foreground shadow-xs z-10 gap-0.5"
-          >
-            <Button
-              type="button"
-              variant={gridMode === 'dots' ? 'default' : 'ghost'}
-              size="xs"
-              onClick={() => onGridModeChange('dots')}
-              title="Dot Grid"
-              className={gridMode === 'dots' ? 'shadow-xs' : 'text-muted-foreground hover:text-foreground'}
+          {!isWelcomeScreen && (
+            <div
+              id="canvas-grid-controls"
+              className="absolute top-3 right-3 inline-flex items-center rounded-lg bg-muted p-1 text-muted-foreground shadow-xs z-10 gap-0.5"
             >
-              Dots
-            </Button>
-            <Button
-              type="button"
-              variant={gridMode === 'lines' ? 'default' : 'ghost'}
-              size="xs"
-              onClick={() => onGridModeChange('lines')}
-              title="Square Grid"
-              className={gridMode === 'lines' ? 'shadow-xs' : 'text-muted-foreground hover:text-foreground'}
-            >
-              Grid
-            </Button>
-            <Button
-              type="button"
-              variant={gridMode === 'empty' ? 'default' : 'ghost'}
-              size="xs"
-              onClick={() => onGridModeChange('empty')}
-              title="Plain Empty"
-              className={gridMode === 'empty' ? 'shadow-xs' : 'text-muted-foreground hover:text-foreground'}
-            >
-              Empty
-            </Button>
-          </div>
+              <Button
+                type="button"
+                variant={gridMode === 'dots' ? 'default' : 'ghost'}
+                size="xs"
+                onClick={() => onGridModeChange('dots')}
+                title="Dot Grid"
+                className={gridMode === 'dots' ? 'shadow-xs' : 'text-muted-foreground hover:text-foreground'}
+              >
+                Dots
+              </Button>
+              <Button
+                type="button"
+                variant={gridMode === 'lines' ? 'default' : 'ghost'}
+                size="xs"
+                onClick={() => onGridModeChange('lines')}
+                title="Square Grid"
+                className={gridMode === 'lines' ? 'shadow-xs' : 'text-muted-foreground hover:text-foreground'}
+              >
+                Grid
+              </Button>
+              <Button
+                type="button"
+                variant={gridMode === 'empty' ? 'default' : 'ghost'}
+                size="xs"
+                onClick={() => onGridModeChange('empty')}
+                title="Plain Empty"
+                className={gridMode === 'empty' ? 'shadow-xs' : 'text-muted-foreground hover:text-foreground'}
+              >
+                Empty
+              </Button>
+            </div>
+          )}
 
-          <svg id="tree-svg" className="w-full h-full block cursor-grab active:cursor-grabbing">
+          <svg
+            id="tree-svg"
+            className={isWelcomeScreen ? 'hidden' : 'w-full h-full block cursor-grab active:cursor-grabbing'}
+          >
             <defs>
               <filter id="node-shadow" x="-20%" y="-20%" width="140%" height="140%">
                 <feDropShadow dx="0" dy="2" stdDeviation="5" floodColor="#000000" floodOpacity="0.16" />
@@ -207,62 +238,66 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           )}
 
           {/* Canvas Floating HUD with shadcn Badges */}
-          <div
-            id="canvas-overlay-hud"
-            className="absolute bottom-3 left-3 flex items-center gap-1.5 pointer-events-none z-10 select-none"
-          >
-            <Badge variant="outline" className="gap-1.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
-              <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
-                Left Drag
-              </kbd>
-              Move / Marquee
-            </Badge>
-            <Badge variant="outline" className="gap-1.5  py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
-              <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
-                Middle Click
-              </kbd>
-              Pan
-            </Badge>
-            <Badge variant="outline" className="gap-1.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
-              <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
-                Right Click
-              </kbd>
-              Menu
-            </Badge>
-            <Badge variant="outline" className="gap-1.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
-              <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
-                Del
-              </kbd>
-              Delete
-            </Badge>
-          </div>
+          {!isWelcomeScreen && (
+            <div
+              id="canvas-overlay-hud"
+              className="absolute bottom-3 left-3 flex items-center gap-1.5 pointer-events-none z-10 select-none"
+            >
+              <Badge variant="outline" className="gap-1.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
+                <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
+                  Left Drag
+                </kbd>
+                Move / Marquee
+              </Badge>
+              <Badge variant="outline" className="gap-1.5  py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
+                <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
+                  Middle Click
+                </kbd>
+                Pan
+              </Badge>
+              <Badge variant="outline" className="gap-1.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
+                <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
+                  Right Click
+                </kbd>
+                Menu
+              </Badge>
+              <Badge variant="outline" className="gap-1.5 py-1 text-[11px] font-sans font-normal bg-card shadow-xs">
+                <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-foreground">
+                  Del
+                </kbd>
+                Delete
+              </Badge>
+            </div>
+          )}
 
           {/* Bottom-Right Zoom Controls */}
-          {zoomControls}
+          {!isWelcomeScreen && zoomControls}
         </main>
 
-        {/* Right Inspector Panel Mount */}
-        <aside
-          id="inspector-panel"
-          className="w-[290px] flex-shrink-0 h-full bg-card border-l border-border flex flex-col z-10 overflow-hidden"
-        >
-          <div className="h-11 px-3 border-b border-border bg-card flex items-center justify-between flex-shrink-0 select-none">
-            <div className="flex items-center gap-2">
-              <SlidersHorizontal className="size-4 text-primary" />
-              <span className="font-semibold text-xs text-foreground">Node Inspector</span>
+        {/* Right Inspector Panel Mount - Hidden in Welcome Screen */}
+        {!isWelcomeScreen && (
+          <aside
+            id="inspector-panel"
+            className="w-[290px] flex-shrink-0 h-full bg-card border-l border-border flex flex-col z-10 overflow-hidden"
+          >
+            <div className="h-11 px-3 border-b border-border bg-card flex items-center justify-between flex-shrink-0 select-none">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="size-4 text-primary" />
+                <span className="font-semibold text-xs text-foreground">Node Inspector</span>
+              </div>
+              <span
+                id="selected-node-badge"
+                className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-secondary text-secondary-foreground border border-border"
+                style={{ color: selectedNode ? getCategoryColor(selectedNode.category) : undefined }}
+              >
+                {selectedNode ? selectedNode.category : 'None'}
+              </span>
             </div>
-            <span
-              id="selected-node-badge"
-              className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-secondary text-secondary-foreground border border-border"
-              style={{ color: selectedNode ? getCategoryColor(selectedNode.category) : undefined }}
-            >
-              {selectedNode ? selectedNode.category : 'None'}
-            </span>
-          </div>
-          <div id="inspector-content" className="flex-1 overflow-y-auto overflow-x-hidden p-3 box-border">
-            {inspector}
-          </div>
-        </aside>
+            <div id="inspector-content" className="flex-1 overflow-y-auto overflow-x-hidden p-3 box-border">
+              {inspector}
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   );

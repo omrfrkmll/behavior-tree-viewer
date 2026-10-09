@@ -19,6 +19,10 @@ import { workspaceScannerService, DiscoveredTreeFile } from './features/workspac
 import { TauriBridge } from './features/tauri/tauri-bridge';
 import { DEFAULT_NODES } from './constants/default-nodes';
 import { INITIAL_DEMO_XML, DEFAULT_BLACKBOARD_TAGS } from './constants/data';
+import { TREE_TEMPLATES, BLANK_TREE_XML } from './constants/templates';
+import { RecentFilesService, RecentFileItem } from './features/recent/recent-files-service';
+import { WelcomeScreen } from './components/welcome/welcome-screen';
+import { WelcomeSidebar, WelcomeFilterTab } from './components/welcome/welcome-sidebar';
 import { BehaviorTree, BtNode, InputTag, NodeModel, NodeStatus } from './types';
 
 declare const acquireVsCodeApi: (() => {
@@ -45,6 +49,11 @@ export const StudioApp: React.FC = () => {
   const [xmlVersion, setXmlVersion] = useState(0);
   const [zoomPercent, setZoomPercent] = useState(92);
 
+  const [isWelcomeScreen, setIsWelcomeScreen] = useState<boolean>(!vscodeRef.current);
+  const [welcomeFilter, setWelcomeFilter] = useState<WelcomeFilterTab>('all');
+  const [recents, setRecents] = useState<RecentFileItem[]>(() => RecentFilesService.getRecents());
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<CanvasViewerComponent | null>(null);
   const popoverRef = useRef<PortPopover | null>(null);
   const contextMenuRef = useRef<ContextMenuComponent | null>(null);
@@ -62,13 +71,19 @@ export const StudioApp: React.FC = () => {
 
   const activeTree = trees[activeTreeIndex] || null;
 
+  useEffect(() => {
+    return RecentFilesService.subscribe(() => {
+      setRecents(RecentFilesService.getRecents());
+    });
+  }, []);
+
   const xmlCode = useMemo(() => {
     if (!trees || trees.length === 0) return '<!-- No Tree Available -->';
     return xmlService.serializeAllTreesToXml(trees, activeTree?.id);
   }, [trees, activeTree, xmlVersion]);
 
   // Handle tree load
-  const loadXml = useCallback((xmlContent: string) => {
+  const loadXml = useCallback((xmlContent: string, fileName?: string, filePath?: string) => {
     const { trees: parsedTrees, newModels } = xmlService.parseXml(xmlContent, customModelsRef.current);
     if (newModels.length > 0) {
       setCustomModels(prev => [...prev, ...newModels]);
@@ -78,6 +93,21 @@ export const StudioApp: React.FC = () => {
       setTrees(parsedTrees);
       setActiveTreeIndex(0);
       setSelectedNode(null);
+
+      const countNodes = (n?: BtNode): number => {
+        if (!n) return 0;
+        return 1 + (n.children || []).reduce((acc, c) => acc + countNodes(c), 0);
+      };
+
+      const treeName = fileName || parsedTrees[0]?.id || 'BehaviorTree.xml';
+      RecentFilesService.addRecent({
+        name: treeName,
+        filePath,
+        xmlContent,
+        nodeCount: countNodes(parsedTrees[0]?.root)
+      });
+
+      setIsWelcomeScreen(false);
 
       setTimeout(() => {
         if (canvasRef.current) {
@@ -90,6 +120,10 @@ export const StudioApp: React.FC = () => {
       setXmlVersion(v => v + 1);
     }
   }, []);
+
+  const handleNewTree = useCallback(() => {
+    loadXml(BLANK_TREE_XML, 'NewTree.xml');
+  }, [loadXml]);
 
   const handleTreeSelected = useCallback((idx: number) => {
     setActiveTreeIndex(idx);
@@ -210,10 +244,27 @@ export const StudioApp: React.FC = () => {
     if (TauriBridge.isTauri()) {
       const res = await TauriBridge.openFileDialog();
       if (res?.content) {
-        loadXml(res.content);
+        const fileName = res.path.split(/[/\\]/).pop() || 'BehaviorTree.xml';
+        loadXml(res.content, fileName, res.path);
       }
+      return;
     }
+    fileInputRef.current?.click();
   }, [loadXml]);
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target?.result as string;
+        if (content) {
+          loadXml(content, file.name);
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
 
   const handleOpenWorkspace = useCallback(async () => {
     if (TauriBridge.isTauri()) {
@@ -418,6 +469,7 @@ export const StudioApp: React.FC = () => {
         const msg = event.data;
         if (msg?.type === 'update' && typeof msg.text === 'string') {
           loadXml(msg.text);
+          setIsWelcomeScreen(false);
         }
       };
       window.addEventListener('message', handleMessage);
@@ -426,7 +478,8 @@ export const StudioApp: React.FC = () => {
         window.removeEventListener('message', handleMessage);
       };
     } else {
-      loadXml(INITIAL_DEMO_XML);
+      loadXml(INITIAL_DEMO_XML, 'AutonomousWarehouseMission.xml');
+      setIsWelcomeScreen(true);
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
       };
@@ -434,97 +487,137 @@ export const StudioApp: React.FC = () => {
   }, [loadXml, handleDeleteNode, handleDuplicateNode, handleDisconnectLink, handleAddNodeAtCoords, handleExportXml]);
 
   return (
-    <AppLayout
-      gridMode={gridMode}
-      onGridModeChange={(mode) => {
-        setGridMode(mode);
-        canvasRef.current?.setGridMode(mode);
-      }}
-      activeTab={activeTab}
-      codeViewOpen={codeViewOpen}
-      selectedNode={selectedNode}
-      navbar={
-        <NavbarView
-          treeIds={trees.map(t => t.id)}
-          activeTreeIndex={activeTreeIndex}
-          callbacks={{
-            onTreeSelected: handleTreeSelected,
-            onOpenFileContent: loadXml,
-            onOpenFile: handleOpenFile,
-            onOpenWorkspace: handleOpenWorkspace,
-            onExportXml: handleExportXml,
-            onToggleCodeView: () => setCodeViewOpen(prev => !prev),
-            onAutoLayout: () => {
-              canvasRef.current?.renderGraph(true);
-              canvasRef.current?.resetView();
-            },
-            onSimulateStep: () => {
-              if (activeTree) {
-                simulationService.stepSimulation(activeTree);
-                canvasRef.current?.renderGraph(false);
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xml"
+        onChange={handleFileInputChange}
+        className="hidden"
+      />
+      <AppLayout
+        isWelcomeScreen={isWelcomeScreen}
+        welcomeSidebar={
+          <WelcomeSidebar
+            activeFilter={welcomeFilter}
+            onFilterChange={setWelcomeFilter}
+            onNewTree={handleNewTree}
+            onOpenFile={handleOpenFile}
+            onOpenWorkspace={handleOpenWorkspace}
+            hasActiveTree={Boolean(activeTree)}
+            activeTreeName={activeTree?.id}
+            onResumeTree={() => setIsWelcomeScreen(false)}
+            recentCount={recents.length}
+            starredCount={recents.filter(r => r.starred).length}
+            templateCount={TREE_TEMPLATES.length}
+          />
+        }
+        welcomeView={
+          <WelcomeScreen
+            activeFilter={welcomeFilter}
+            onFilterChange={setWelcomeFilter}
+            onSelectTreeXml={(xml, name, path) => loadXml(xml, name, path)}
+            onNewTree={handleNewTree}
+            onOpenFile={handleOpenFile}
+            onOpenWorkspace={handleOpenWorkspace}
+            hasActiveTree={Boolean(activeTree)}
+            activeTreeName={activeTree?.id}
+            onResumeTree={() => setIsWelcomeScreen(false)}
+          />
+        }
+        gridMode={gridMode}
+        onGridModeChange={(mode) => {
+          setGridMode(mode);
+          canvasRef.current?.setGridMode(mode);
+        }}
+        activeTab={activeTab}
+        codeViewOpen={codeViewOpen}
+        selectedNode={selectedNode}
+        navbar={
+          <NavbarView
+            treeIds={trees.map(t => t.id)}
+            activeTreeIndex={activeTreeIndex}
+            isWelcomeScreen={isWelcomeScreen}
+            callbacks={{
+              onTreeSelected: handleTreeSelected,
+              onOpenFileContent: loadXml,
+              onOpenFile: handleOpenFile,
+              onOpenWorkspace: handleOpenWorkspace,
+              onExportXml: handleExportXml,
+              onToggleCodeView: () => setCodeViewOpen(prev => !prev),
+              onToggleWelcome: () => setIsWelcomeScreen(prev => !prev),
+              onAutoLayout: () => {
+                canvasRef.current?.renderGraph(true);
+                canvasRef.current?.resetView();
+              },
+              onSimulateStep: () => {
+                if (activeTree) {
+                  simulationService.stepSimulation(activeTree);
+                  canvasRef.current?.renderGraph(false);
+                }
+              },
+              onResetSimulation: () => {
+                if (activeTree) {
+                  simulationService.resetSimulation(activeTree);
+                  canvasRef.current?.renderGraph(false);
+                }
               }
-            },
-            onResetSimulation: () => {
-              if (activeTree) {
-                simulationService.resetSimulation(activeTree);
+            }}
+          />
+        }
+        sidebarTabs={
+          <SidebarTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            treeCount={discoveredFiles.length}
+          />
+        }
+        palette={<PaletteView models={customModels} />}
+        explorer={<ExplorerView files={discoveredFiles} onSelectTreeFile={loadXml} />}
+        blackboard={
+          <BlackboardView
+            tags={blackboardTags}
+            onAddTag={handleAddTag}
+            onDeleteTag={handleDeleteTag}
+          />
+        }
+        inspector={
+          <InspectorView
+            key={selectedNode ? selectedNode.id : 'empty'}
+            selectedNode={selectedNode}
+            customModels={customModels}
+            blackboardTags={blackboardTags}
+            callbacks={{
+              onNodeUpdated: () => {
                 canvasRef.current?.renderGraph(false);
-              }
-            }
-          }}
-        />
-      }
-      sidebarTabs={
-        <SidebarTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          treeCount={discoveredFiles.length}
-        />
-      }
-      palette={<PaletteView models={customModels} />}
-      explorer={<ExplorerView files={discoveredFiles} onSelectTreeFile={loadXml} />}
-      blackboard={
-        <BlackboardView
-          tags={blackboardTags}
-          onAddTag={handleAddTag}
-          onDeleteTag={handleDeleteTag}
-        />
-      }
-      inspector={
-        <InspectorView
-          key={selectedNode ? selectedNode.id : 'empty'}
-          selectedNode={selectedNode}
-          customModels={customModels}
-          blackboardTags={blackboardTags}
-          callbacks={{
-            onNodeUpdated: () => {
-              canvasRef.current?.renderGraph(false);
-              setXmlVersion(v => v + 1);
-            },
-            onNodeDeleted: (n) => handleDeleteNode(n)
-          }}
-        />
-      }
-      codeDrawer={
-        <CodeDrawerView
-          code={xmlCode}
-          selectedNode={selectedNode}
-          activeTree={activeTree}
-          onClose={() => setCodeViewOpen(false)}
-          onCopy={handleCopyXml}
-          copied={copied}
-          onApplyCode={handleApplyXmlFromEditor}
-        />
-      }
-      zoomControls={
-        <ZoomControls
-          zoomPercent={zoomPercent}
-          onZoomChange={(percent) => canvasRef.current?.setZoom(percent)}
-          onZoomIn={() => canvasRef.current?.zoomIn()}
-          onZoomOut={() => canvasRef.current?.zoomOut()}
-          onResetZoom={() => canvasRef.current?.resetZoom()}
-        />
-      }
-    />
+                setXmlVersion(v => v + 1);
+              },
+              onNodeDeleted: (n) => handleDeleteNode(n)
+            }}
+          />
+        }
+        codeDrawer={
+          <CodeDrawerView
+            code={xmlCode}
+            selectedNode={selectedNode}
+            activeTree={activeTree}
+            onClose={() => setCodeViewOpen(false)}
+            onCopy={handleCopyXml}
+            copied={copied}
+            onApplyCode={handleApplyXmlFromEditor}
+          />
+        }
+        zoomControls={
+          <ZoomControls
+            zoomPercent={zoomPercent}
+            onZoomChange={(percent) => canvasRef.current?.setZoom(percent)}
+            onZoomIn={() => canvasRef.current?.zoomIn()}
+            onZoomOut={() => canvasRef.current?.zoomOut()}
+            onResetZoom={() => canvasRef.current?.resetZoom()}
+          />
+        }
+      />
+    </>
   );
 };
 
